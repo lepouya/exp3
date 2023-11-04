@@ -129,5 +129,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Android Studio
+.idea
+
 # Mac stuff
 .DS_Store

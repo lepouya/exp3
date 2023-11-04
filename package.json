@@ -17,11 +17,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "android": "tsc && vite build && cap run android",
     "preview": "vite preview",
     "test": "vitest",
     "update": "rm -rf node_modules && npm update"
   },
   "dependencies": {
+    "@capacitor/android": "^5",
     "@capacitor/app": "^5",
     "@capacitor/core": "^5",
     "@capacitor/filesystem": "^5",
@@ -43,6 +45,7 @@
     "@types/react-dom": "^18",
     "@types/react-router": "^5",
     "@types/react-router-dom": "^5",
+    "@vitejs/plugin-legacy": "latest",
     "@vitejs/plugin-react": "latest",
     "typescript": "latest",
     "vite": "latest",
