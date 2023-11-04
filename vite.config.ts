@@ -1,16 +1,23 @@
-import legacy from '@vitejs/plugin-legacy'
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from "vitest/config";
 
-// https://vitejs.dev/config/
+import react from "@vitejs/plugin-react";
+
+import pkg from "./package.json";
+
 export default defineConfig({
-  plugins: [
-    react(),
-    legacy()
-  ],
+  plugins: [react()],
+  define: {
+    ...Object.fromEntries(
+      Object.entries(pkg)
+        .filter(([, s]) => typeof s === "string")
+        .map(([k, v]) => [
+          `import.meta.env.${k.toUpperCase()}`,
+          JSON.stringify(v),
+        ]),
+    ),
+  },
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts',
-  }
-})
+    passWithNoTests: true,
+  },
+});
