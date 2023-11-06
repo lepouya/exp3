@@ -1,0 +1,205 @@
+export interface ImageProps {
+  src: string;
+
+  position?: [number, number] | Position;
+  stretch?: number | [number, number] | Scale;
+  crop?: [number, number, number, number] | (Position & Size);
+  rotate?: number | [number, number, number] | (Position & Angle);
+  scale?: number | [number, number, number, number] | (Position & Scale);
+
+  opacity?: number;
+  smoothing?: boolean | "disabled" | ImageSmoothingQuality;
+  /// See examples https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation
+  composition?: GlobalCompositeOperation;
+  /// See examples https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/filter
+  filter?: string | string[];
+}
+
+export interface ImageOptions {
+  sources?: (ImageProps | string)[];
+  format?: string;
+  quality?: number;
+
+  width?: number;
+  height?: number;
+  style?: Record<string, string>;
+  className?: string | string[];
+
+  returnType?: "blob" | "objectUrl" | "dataUrl";
+}
+
+export class ImageLoadingError extends Error {}
+export class ImageRenderingError extends Error {}
+
+export default async function composeImage(
+  sources?: (ImageProps | string)[],
+  options?: ImageOptions,
+): Promise<Blob | string> {
+  const opts = Object.assign({}, defaultOptions, options);
+  const srcs = [...(sources || []), ...(opts?.sources || [])];
+  const imgs = await Promise.all(srcs.map((src) => loadImage(src)));
+
+  // Figure out the dimensions of the canvas
+  const canvas = window.document.createElement("canvas");
+  canvas.width = opts.width || Math.max(...imgs.map(([img]) => img.width));
+  canvas.height = opts.height || Math.max(...imgs.map(([img]) => img.height));
+  canvas.className = [
+    ...(Array.isArray(opts.className) ? opts.className : [opts.className]),
+    "composed-image",
+  ].join(" ");
+  if (opts.style) {
+    Object.assign(canvas.style, opts.style);
+  }
+
+  const context = canvas.getContext("2d")!;
+
+  for (const [img, props] of imgs) {
+    context.save();
+
+    // Rect in source image
+    const sx = getNum(props.crop, 0, "x") || 0;
+    const sy = getNum(props.crop, 1, "y") || 0;
+    const sw = getNum(props.crop, 2, "w") || img.width;
+    const sh = getNum(props.crop, 3, "h") || img.height;
+
+    // Rect in target image
+    const dx = getNum(props.position, 0, "x") || 0;
+    const dy = getNum(props.position, 1, "y") || 0;
+    const dw = (getNum(props.stretch, 0, "sx") || 1) * sw;
+    const dh = (getNum(props.stretch, 1, "sy") || 1) * sh;
+
+    // Rotation center and degrees
+    const r = (getNum(props.rotate, 2, "a") || 0) * (Math.PI / 180);
+    const rc = typeof props.rotate === "number" ? undefined : props.rotate;
+    const cx = (getNum(rc, 0, "x") ?? 0.5) * dw + dx;
+    const cy = (getNum(rc, 1, "y") ?? 0.5) * dh + dy;
+
+    // Scaling center and factors
+    const kw = getNum(props.scale, 2, "sx") || 1;
+    const kh = getNum(props.scale, 3, "sy") || 1;
+    const kc = typeof props.scale === "number" ? undefined : props.scale;
+    const kx = (getNum(kc, 0, "x") ?? 0.5) * dw + dx;
+    const ky = (getNum(kc, 1, "y") ?? 0.5) * dh + dy;
+
+    // Composition style and alpha
+    context.globalAlpha = props.opacity ?? 1;
+    context.globalCompositeOperation = props.composition ?? "source-over";
+
+    // How to smooth images if being resized
+    context.imageSmoothingEnabled =
+      props.smoothing !== false && props.smoothing !== "disabled";
+    context.imageSmoothingQuality =
+      props.smoothing === "medium" || props.smoothing === "high"
+        ? props.smoothing
+        : "low";
+
+    // CSS filters
+    if (props.filter && Array.isArray(props.filter)) {
+      context.filter = props.filter.join(" ");
+    } else if (props.filter) {
+      context.filter = props.filter;
+    }
+    context.filter ||= "none";
+
+    // Transformations matrix
+    context.resetTransform();
+    if (r !== 0) {
+      context.translate(cx, cy);
+      context.rotate(r);
+      context.translate(-cx, -cy);
+    }
+    if (kw !== 1 || kh !== 1) {
+      context.translate(kx, ky);
+      context.scale(kw, kh);
+      context.translate(-kx, -ky);
+    }
+
+    // The stretching factors
+    context.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+
+    context.restore();
+  }
+
+  if (opts.returnType === "dataUrl") {
+    return canvas.toDataURL(opts.format, opts.quality);
+  }
+
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new ImageRenderingError())),
+      opts.format,
+      opts.quality,
+    ),
+  );
+
+  if (opts.returnType === "objectUrl") {
+    return URL.createObjectURL(blob);
+  }
+
+  return blob;
+}
+
+export function loadImage(src: ImageProps | string) {
+  return new Promise<ResolvedImage>((resolve, reject) => {
+    const props = typeof src === "string" ? { src } : src;
+    const img = new Image();
+    img.onerror = () => reject(new ImageLoadingError());
+    img.onload = () => resolve([img, props]);
+    img.crossOrigin = "anonymous";
+    img.src = props.src;
+  });
+}
+
+type ResolvedImage = [HTMLImageElement, ImageProps];
+
+interface Position {
+  x: number;
+  y: number;
+}
+
+interface Size {
+  w: number;
+  h: number;
+}
+
+interface Scale {
+  sx: number;
+  sy: number;
+}
+
+interface Angle {
+  a: number;
+}
+
+const defaultOptions: ImageOptions = {
+  format: "image/png",
+  quality: 0.92,
+  returnType: "dataUrl",
+};
+
+function getNum(v: any, ...idxs: (number | string)[]): number | undefined {
+  if (!v || typeof v === "number") {
+    return v ?? undefined;
+  } else if (Array.isArray(v)) {
+    for (let idx of idxs) {
+      if (typeof idx !== "number") {
+        idx = parseInt(idx);
+      }
+      if (typeof idx === "number" && isFinite(idx)) {
+        const ret = v[idx];
+        if (ret !== null && ret !== undefined && typeof ret === "number") {
+          return ret;
+        }
+      }
+    }
+  } else if (typeof v === "object") {
+    for (let idx of idxs) {
+      const ret = v[idx];
+      if (ret !== null && ret !== undefined && typeof ret === "number") {
+        return ret;
+      }
+    }
+  }
+
+  return undefined;
+}
