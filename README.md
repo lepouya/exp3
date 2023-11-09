@@ -2,7 +2,6 @@
 
 - Import utils from old projects and revamp
 - compare old UI components to the new Ion ones
-- Simpler resource management classes
 - RPG classes
 - Run the experiments for everything to work
 

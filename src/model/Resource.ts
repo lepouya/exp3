@@ -1,7 +1,14 @@
 import Decimal, { DecimalSource } from "break_eternity.js";
 
+/**
+ * The type of display for a resource.
+ */
 export type DisplayType = "none" | "number" | "time" | "percentage";
 
+/**
+ * A resource count, with a resource and a count.
+ * @template Resolved Whether the resource is resolved or only the name.
+ */
 export type ResourceCount<
   Resolved extends "resolved" | "mixed" = "mixed",
   Option = Resolved extends "resolved" ? never : string,
@@ -10,8 +17,17 @@ export type ResourceCount<
   count: DecimalSource;
 };
 
+/**
+ * Represents the purchase style of a resource.
+ */
 export type PurchaseStyle = "full" | "partial" | "free";
 
+/**
+ * Represents the amount of a purchase, which can be either a decimal number or
+ * an object with a minimum amount, maximum amount, and increments.
+ * In the case of an object, the purchase will be made in increments of the
+ * given amount, starting at the minimum amount and ending at the maximum amount.
+ */
 export type PurchaseAmount =
   | DecimalSource
   | {
@@ -20,6 +36,9 @@ export type PurchaseAmount =
       increments: number;
     };
 
+/**
+ * Represents the cost of purchasing a resource.
+ */
 export type PurchaseCost = {
   count: DecimalSource;
   style: PurchaseStyle;
@@ -27,49 +46,88 @@ export type PurchaseCost = {
   cost: ResourceCount<"resolved">[];
 };
 
+/**
+ * Represents a resource in the game.
+ */
 export default class Resource {
+  /// The resource manager that updates this resource.
   readonly manager = ResourceManager.singleton;
+  /// Unique name of the resource.
   readonly name: string;
 
+  /// Whether the resource is unlocked and can be used.
   unlocked?: boolean;
+  /// Whether the resource is disabled and cannot be updated.
   disabled?: boolean;
+  /// The priority of the resource, used to determine update order. Lower is better.
   priority: number = Infinity;
 
+  /// The icon to display when rendering the resource.
   icon?: string;
+  /// The display style of the resource when rendering.
   display?: DisplayType;
+  /// The singular name of the resource, used when rendering.
   singularName?: string;
+  /// The plural name of the resource, used when rendering.
   pluralName?: string;
+  /// The description of the resource, used when rendering.
   description?: string;
 
-  count: DecimalSource = 0;
+  /// The current count of the resource. The main reason why we need resource management.
+  count: Decimal = Decimal.dZero;
+  /// The maximum count the resource can take.
   maxCount?: DecimalSource;
+  /// The minimum count the resource can take.
   minCount?: DecimalSource;
 
+  /// Extra data for the resource. Can be used for tick updates or rendering.
   extra: Record<string, any> = {};
 
+  /// Whether the resource should be automatically unlocked when its unlock cost can be afforded.
   autoUnlock?: boolean;
+  /// Whether the resource should be automatically awarded when its cost can be afforded.
   autoAward?: boolean;
 
+  /// Customized value return for the resource. In most cases the default is fine.
   value: () => Decimal = () =>
     Decimal.clamp(this.count, this.minCount ?? 0, this.maxCount ?? Infinity);
+  /// Customized cost function for the resource. Returns the resource costs for
+  /// purchasing the n'th count of the resource. Not cumulative.
   cost: (n: DecimalSource) => ResourceCount[] = () => [];
+  /// Customized unlock cost function for the resource. Returns the resource
+  /// costs for unlocking the resource. If not unlocked already.
   unlockCost?: () => ResourceCount[];
 
+  /// Pre-check when the manager is updating this resource. Returns true if the
+  /// resource should be updated, false otherwise.
   shouldTick?: (dt: number, source?: string) => boolean;
+  /// The resource tick function. This is where updates to the resource should
+  /// be made. The return value is collected along with all other resources to
+  /// be returned by the manager.
   tick?: (dt: number, source?: string) => any;
 
+  /// Customized gain factor for the resource. Used when calculating the gain
+  /// from a purchase.
   gainFactor?: (m: DecimalSource) => DecimalSource;
+  /// Customized cost factor for the resource. Used when calculating the cost
+  /// for a purchase.
   costFactor?: (m: DecimalSource) => DecimalSource;
 
+  /// Callback for when the resource is purchased. The purchase cost is passed
+  /// in as an argument.
   onPurchase?: (purchase: PurchaseCost) => void;
+  /// Callback for when the resource is changed. The new count and the source
+  /// of the change is passed in as arguments.
   onChange?: (count: DecimalSource, source: string) => any;
 
+  /// The last execution status of the resource.
   execution: {
     lastTick?: number;
     lastResult?: any;
     lastAttempt?: number;
   } = {};
 
+  /// The last rate update of the resource.
   rate: {
     count: Decimal;
     ticks: number;
@@ -386,6 +444,70 @@ export default class Resource {
       );
     }
   }
+
+  withTimer({
+    kind = "",
+    tickSource = "",
+
+    minValue = 0.0,
+    maxValue = +Infinity,
+    direction = 1.0,
+
+    streakKind = "current",
+    maxStreakKind = "max",
+    minStreakKind = "min",
+    resetStreakSource = "",
+  } = {}): this {
+    this.tick = function (dt: number, src?: string) {
+      if (!tickSource || src === tickSource) {
+        let cur =
+          (kind && this.extra ? this.extra[kind] : this.count?.toNumber()) ?? 0;
+        if (
+          (cur > minValue || direction > 0) &&
+          (cur < maxValue || direction < 0)
+        ) {
+          cur = Math.min(Math.max(cur + direction * dt, minValue), maxValue);
+          if (kind && this.extra) {
+            this.extra[kind] = cur;
+          } else {
+            this.count = Decimal.fromNumber(cur);
+          }
+
+          if (streakKind && this.extra && this.extra[streakKind] != null) {
+            this.extra[streakKind] = Math.min(
+              Math.max(this.extra[streakKind] + direction * dt, minValue),
+              maxValue,
+            );
+
+            if (
+              maxStreakKind &&
+              this.extra[maxStreakKind] != null &&
+              this.extra[maxStreakKind] < this.extra[streakKind]
+            ) {
+              this.extra[maxStreakKind] = this.extra[streakKind];
+            }
+
+            if (
+              minStreakKind &&
+              this.extra[minStreakKind] != null &&
+              this.extra[minStreakKind] > this.extra[streakKind]
+            ) {
+              this.extra[minStreakKind] = this.extra[streakKind];
+            }
+          }
+        }
+      } else if (!resetStreakSource || src === resetStreakSource) {
+        if (streakKind && this.extra) {
+          this.extra[streakKind] =
+            direction > 0 ? minValue : direction < 0 ? maxValue : 0;
+        }
+      }
+
+      return null;
+    };
+
+    return this;
+  }
 }
 
 export class ResourceManager {
@@ -394,14 +516,16 @@ export class ResourceManager {
 
   readonly resources: Record<string, Resource> = {};
 
+  lastTick?: number;
+
   rateUpdateSecs = 0.1;
   rateHistoryWindow = 10;
   minResourceUpdateSecs = 0.001;
   maxResourceUpdateSecs = 24 * 60 * 60;
   maxResourceTickSecs = 1;
-  timeDilation = 1.0;
-  lastUpdate?: number;
 
+  globalTimeDilation = 1.0;
+  globalNumberFormat?: string;
   globalSellRatio: DecimalSource = 1;
 
   gainFactor?: (m: DecimalSource) => DecimalSource;
@@ -586,14 +710,14 @@ export class ResourceManager {
   tick(now: number = Date.now(), source: string = "unknown"): any[] {
     // Figure out how long it's been since last tick
     let dt = Math.min(
-      Math.max((now - (this.lastUpdate ?? now)) / 1000, 0),
+      Math.max((now - (this.lastTick ?? now)) / 1000, 0),
       this.maxResourceUpdateSecs,
     );
-    if (dt < this.minResourceUpdateSecs && this.lastUpdate != undefined) {
+    if (dt < this.minResourceUpdateSecs && this.lastTick != undefined) {
       return [];
     }
 
-    this.lastUpdate = now;
+    this.lastTick = now;
     const epoch = now - dt * 1000;
     const cache: Record<string, Decimal> = {};
 
@@ -618,7 +742,7 @@ export class ResourceManager {
 
     // Update rates and execution
     resources.forEach((res) => {
-      cache[res.name] = Decimal.fromValue_noAlloc(res.count);
+      cache[res.name] = res.count;
 
       res.rate.lastCountUpdate ??= epoch;
       res.rate.lastCount ??= cache[res.name];
@@ -635,7 +759,7 @@ export class ResourceManager {
     // tick all resources
     const results: Record<string, any[]> = {};
     const tickResources = resources.filter((res) => res.tick);
-    const tickScale = 1 / 1000 / this.timeDilation;
+    const tickScale = 1 / 1000 / this.globalTimeDilation;
     while (dt > 0) {
       dt -= Math.min(
         Math.max(dt, this.minResourceUpdateSecs),
@@ -699,7 +823,7 @@ export class ResourceManager {
         res.rate.count = Decimal.minus(res.count, res.rate.lastCount ?? 0).div(
           rateDt,
         );
-        res.rate.lastCount = Decimal.fromValue_noAlloc(res.count);
+        res.rate.lastCount = res.count;
         res.rate.lastCountUpdate = now;
         res.rate.pastCounts.unshift(res.rate.count);
         res.rate.pastCounts.splice(this.rateHistoryWindow);

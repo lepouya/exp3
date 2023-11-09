@@ -52,26 +52,26 @@ test("Overwriting fields", () => {
 });
 
 test("Time is updated correctly", () => {
-  const settings = { lastUpdate: 1000 };
+  const settings = { lastTick: 1000 };
   const rm = ResourceManager.reset(settings);
 
   rm.tick(2000);
-  expect(rm.lastUpdate).to.be.equal(2000);
+  expect(rm.lastTick).to.be.equal(2000);
 
   rm.tick(3000);
-  expect(rm.lastUpdate).to.be.equal(3000);
+  expect(rm.lastTick).to.be.equal(3000);
 });
 
 test("Time below min delta doesn't change anything", () => {
-  const settings = { lastUpdate: 1000 };
+  const settings = { lastTick: 1000 };
   const rm = ResourceManager.reset(settings);
 
   rm.tick(1000.1);
-  expect(rm.lastUpdate).to.be.equal(1000);
+  expect(rm.lastTick).to.be.equal(1000);
 });
 
 test("Resource ticks called corectly", () => {
-  const settings = { lastUpdate: 0 };
+  const settings = { lastTick: 0 };
   const rm = ResourceManager.reset(settings);
 
   rm.upsert({
@@ -86,18 +86,18 @@ test("Resource ticks called corectly", () => {
   });
 
   rm.tick(500);
-  expect(rm.lastUpdate).to.be.equal(500);
+  expect(rm.lastTick).to.be.equal(500);
   expect(N(rm.resources["test1"].count)).to.be.equal(0.5);
   expect(N(rm.resources["test2"].count)).to.be.equal(1);
 
   rm.tick(1500);
-  expect(rm.lastUpdate).to.be.equal(1500);
+  expect(rm.lastTick).to.be.equal(1500);
   expect(N(rm.resources["test1"].count)).to.be.equal(1.5);
   expect(N(rm.resources["test2"].count)).to.be.equal(2);
 });
 
 test("Tick granularity works as expected", () => {
-  const settings = { lastUpdate: 0 };
+  const settings = { lastTick: 0 };
   const rm = ResourceManager.reset(settings);
 
   const R1 = rm.upsert({ name: "test1" });
@@ -110,28 +110,28 @@ test("Tick granularity works as expected", () => {
   };
 
   rm.tick(0.5);
-  expect(rm.lastUpdate).to.be.equal(0);
+  expect(rm.lastTick).to.be.equal(0);
   expect(N(rm.resources["test1"].count)).to.be.equal(0);
   expect(N(rm.resources["test2"].count)).to.be.equal(0);
 
   rm.tick(500);
-  expect(rm.lastUpdate).to.be.equal(500);
+  expect(rm.lastTick).to.be.equal(500);
   expect(N(rm.resources["test1"].count)).to.be.equal(0.5);
   expect(N(rm.resources["test2"].count)).to.be.equal(1);
 
   rm.tick(1000);
-  expect(rm.lastUpdate).to.be.equal(1000);
+  expect(rm.lastTick).to.be.equal(1000);
   expect(N(rm.resources["test1"].count)).to.be.equal(1);
   expect(N(rm.resources["test2"].count)).to.be.equal(2);
 
   rm.tick(10000);
-  expect(rm.lastUpdate).to.be.equal(10000);
+  expect(rm.lastTick).to.be.equal(10000);
   expect(N(rm.resources["test1"].count)).to.be.equal(10);
   expect(N(rm.resources["test2"].count)).to.be.equal(11);
 });
 
 test("Max tick update works", () => {
-  const settings = { lastUpdate: 0 };
+  const settings = { lastTick: 0 };
   const rm = ResourceManager.reset(settings);
 
   rm.upsert("test1").tick = function (dt) {
@@ -142,18 +142,18 @@ test("Max tick update works", () => {
   };
 
   rm.tick(500);
-  expect(rm.lastUpdate).to.be.equal(500);
+  expect(rm.lastTick).to.be.equal(500);
   expect(N(rm.resources["test1"].count)).to.be.equal(0.5);
   expect(N(rm.resources["test2"].count)).to.be.equal(1);
 
   rm.tick(100000000);
-  expect(rm.lastUpdate).to.be.equal(100000000);
+  expect(rm.lastTick).to.be.equal(100000000);
   expect(N(rm.resources["test1"].count)).to.be.equal(86400.5);
   expect(N(rm.resources["test2"].count)).to.be.equal(86401);
 });
 
 test("Rate update works", () => {
-  const settings = { lastUpdate: 0 };
+  const settings = { lastTick: 0 };
   const rm = ResourceManager.reset(settings);
 
   rm.upsert({
@@ -447,7 +447,7 @@ test("Helper methods", () => {
 });
 
 test("Task executor enables and disabled task runs", () => {
-  const settings = { lastUpdate: 0 };
+  const settings = { lastTick: 0 };
   const rm = ResourceManager.reset(settings);
 
   const t1 = rm.upsert({
