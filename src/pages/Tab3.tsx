@@ -8,8 +8,6 @@ import {
   IonToolbar,
 } from "@ionic/react";
 
-import ExploreContainer from "../components/ExploreContainer";
-
 const Tab3: React.FC = () => {
   return (
     <IonPage>
@@ -18,14 +16,7 @@ const Tab3: React.FC = () => {
           <IonTitle>Tab 3</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Tab 3</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <ExploreContainer name="Tab 3 page" />
-      </IonContent>
+      <IonContent fullscreen></IonContent>
     </IonPage>
   );
 };

@@ -1,9 +1,8 @@
 ## TODO
 
-- Import utils from old projects and revamp
-- compare old UI components to the new Ion ones
 - RPG classes
 - Run the experiments for everything to work
+- Turn image composition into an npm lib
 
 ## Things to experiment with
 

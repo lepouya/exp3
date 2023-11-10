@@ -12,39 +12,39 @@ import {
 } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 
-import Tab1 from "./pages/Tab1";
-import Tab2 from "./pages/Tab2";
+import AnimeTab from "./pages/AnimeTab";
+import DerivativesTab from "./pages/DerivativesTab";
 import Tab3 from "./pages/Tab3";
 
 const App: React.FC = () => (
   <IonReactRouter>
     <IonTabs>
       <IonRouterOutlet>
-        <Route exact path="/tab1">
-          <Tab1 />
+        <Route exact path="/anime">
+          <AnimeTab />
         </Route>
-        <Route exact path="/tab2">
-          <Tab2 />
+        <Route exact path="/derivatives">
+          <DerivativesTab />
         </Route>
-        <Route path="/tab3">
+        <Route path="/nothing">
           <Tab3 />
         </Route>
         <Route exact path="/">
-          <Redirect to="/tab1" />
+          <Redirect to="/anime" />
         </Route>
       </IonRouterOutlet>
       <IonTabBar slot="bottom">
-        <IonTabButton tab="tab1" href="/tab1">
+        <IonTabButton tab="anime" href="/anime">
           <IonIcon aria-hidden="true" icon={triangle} />
-          <IonLabel>Tab 1</IonLabel>
+          <IonLabel>Anime</IonLabel>
         </IonTabButton>
-        <IonTabButton tab="tab2" href="/tab2">
+        <IonTabButton tab="derivatives" href="/derivatives">
           <IonIcon aria-hidden="true" icon={ellipse} />
-          <IonLabel>Tab 2</IonLabel>
+          <IonLabel>d/dx</IonLabel>
         </IonTabButton>
-        <IonTabButton tab="tab3" href="/tab3">
+        <IonTabButton tab="nothing" href="/nothing">
           <IonIcon aria-hidden="true" icon={square} />
-          <IonLabel>Tab 3</IonLabel>
+          <IonLabel>Nothing</IonLabel>
         </IonTabButton>
       </IonTabBar>
     </IonTabs>
