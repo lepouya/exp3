@@ -37,7 +37,7 @@ export default async function composeImage(
 ): Promise<Blob | string> {
   const opts = Object.assign({}, defaultOptions, options);
   const srcs = [...(sources || []), ...(opts?.sources || [])];
-  const imgs = await Promise.all(srcs.map((src) => loadImage(src)));
+  const imgs = await Promise.all(srcs.map((src) => loadImage(src, opts)));
 
   // Figure out the dimensions of the canvas
   const canvas = window.document.createElement("canvas");
@@ -139,9 +139,21 @@ export default async function composeImage(
   return blob;
 }
 
-export function loadImage(src: ImageProps | string) {
+export function loadImage(
+  src: ImageProps | string,
+  opts?: Partial<ImageOptions>,
+) {
   return new Promise<ResolvedImage>((resolve, reject) => {
     const props = typeof src === "string" ? { src } : src;
+    if (!props.src || props.src === "transparent") {
+      props.src = transparentGif;
+    } else if (props.src.startsWith("plain:")) {
+      props.src = plainSvgTemplate
+        .replace("{color}", encodeURIComponent(props.src.slice(6).trim()))
+        .replace("{width}", opts?.width?.toString() || "100%")
+        .replace("{height}", opts?.height?.toString() || "100%");
+    }
+
     const img = new Image();
     img.onerror = () => reject(new ImageLoadingError());
     img.onload = () => resolve([img, props]);
@@ -176,6 +188,16 @@ const defaultOptions: ImageOptions = {
   quality: 0.92,
   returnType: "dataUrl",
 };
+
+const transparentGif =
+  "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+
+const plainSvgTemplate =
+  "data:image/svg+xml;utf8," +
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1" preserveAspectRatio="none"' +
+  '     width="{width}" height="{height}">' +
+  '  <rect x="0" y="0" width="1" height="1" fill="{color}" />' +
+  "</svg>";
 
 function getNum(v: any, ...idxs: (number | string)[]): number | undefined {
   if (!v || typeof v === "number") {

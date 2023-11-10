@@ -1,0 +1,163 @@
+{
+  "rank": {
+    "E": {
+      "image": {
+        "0": "plain:#D3D3D3",
+        "icon-9": "rank-E-icon.png"
+      }
+    },
+    "D": {
+      "image": {
+        "0": "plain:#FFFFFF",
+        "icon-9": "rank-D-icon.png"
+      }
+    },
+    "C": {
+      "image": {
+        "0": "plain:#90EE90",
+        "icon-9": "rank-C-icon.png"
+      }
+    },
+    "B": {
+      "image": {
+        "0": "plain:#ADD8E6",
+        "icon-9": "rank-B-icon.png"
+      }
+    },
+    "A": {
+      "image": {
+        "0": "plain:#DA70D6",
+        "icon-9": "rank-A-icon.png"
+      }
+    },
+    "S": {
+      "image": {
+        "0": "plain:#FFD700",
+        "icon-9": "rank-S-icon.png"
+      }
+    }
+  },
+  "character": {
+    "Guy 1": {
+      "image": {
+        "0": "char-000-0.png",
+        "2": "char-000-2.png"
+      }
+    },
+    "Girl 1": {
+      "image": {
+        "0": "char-001-0.png",
+        "2": "char-001-2.png"
+      }
+    },
+    "Guy 2": {
+      "image": {
+        "0": "char-002-0.png",
+        "2": "char-002-2.png"
+      }
+    },
+    "Girl 2": {
+      "image": {
+        "0": "char-003-0.png",
+        "2": "char-003-2.png"
+      }
+    },
+    "Girl 3": {
+      "image": {
+        "0": "char-004-0.png",
+        "2": "char-004-2.png"
+      }
+    },
+    "Guy 3": {
+      "image": {
+        "0": "char-005-0.png",
+        "2": "char-005-2.png"
+      }
+    },
+    "Girl 4": {
+      "image": {
+        "0": "char-006-0.png",
+        "2": "char-006-2.png"
+      }
+    },
+    "Girl 5": {
+      "image": {
+        "0": "char-007-0.png",
+        "2": "char-007-2.png"
+      }
+    }
+  },
+  "body": {
+    "Tattered Rags": {
+      "image": {
+        "1": "body-000-1.png"
+      }
+    },
+    "Dress 1": {
+      "image": {
+        "1": "body-001-1.png"
+      }
+    },
+    "Suit 1": {
+      "image": {
+        "1": "body-002-1.png"
+      }
+    },
+    "Dress 2": {
+      "image": {
+        "1": "body-003-1.png"
+      }
+    },
+    "Dress 3": {
+      "image": {
+        "1": "body-004-1.png"
+      }
+    }
+  },
+  "hand": {
+    "Bandaged Arms": {
+      "image": {
+        "1": "hand-000-1.png"
+      }
+    },
+    "Leather Gloves 1": {
+      "image": {
+        "1": "hand-001-1.png"
+      }
+    }
+  },
+  "feet": {
+    "Bandaged Feet": {
+      "image": {
+        "1": "feet-000-1.png"
+      }
+    },
+    "Leather Boots 1": {
+      "image": {
+        "1": "feet-001-1.png"
+      }
+    }
+  },
+  "head": {
+    "Cap 1": {
+      "image": {
+        "2": "head-000-2.png"
+      }
+    },
+    "Cap 2": {
+      "image": {
+        "2": "head-001-2.png"
+      }
+    },
+    "Tiara 1": {
+      "image": {
+        "2": "head-002-2.png"
+      }
+    },
+    "Flower Head 1": {
+      "image": {
+        "2": "head-003-2.png"
+      }
+    }
+  }
+}

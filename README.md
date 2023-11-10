@@ -1,6 +1,5 @@
 ## TODO
 
-- RPG classes
 - Run the experiments for everything to work
 - Turn image composition into an npm lib
 
