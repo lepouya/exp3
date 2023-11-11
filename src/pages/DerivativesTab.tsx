@@ -1,24 +1,9 @@
 import React from "react";
 
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-} from "@ionic/react";
+import { IonLabel } from "@ionic/react";
 
 const DerivativesTab: React.FC = () => {
-  return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Derivatives</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen></IonContent>
-    </IonPage>
-  );
+  return <IonLabel>Coming soon</IonLabel>;
 };
 
 export default DerivativesTab;

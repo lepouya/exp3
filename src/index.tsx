@@ -14,14 +14,21 @@ import "@ionic/react/css/display.css";
 /* Theme variables */
 import "./theme.css";
 
+import {
+  calculatorOutline,
+  gameControllerOutline,
+  gridOutline,
+} from "ionicons/icons";
 import React from "react";
 import { createRoot } from "react-dom/client";
 
 import { IonApp, setupIonicReact } from "@ionic/react";
 
-import App from "./App";
 import ImageComposition from "./components/ImageComposition";
 import RPG from "./model/RPG";
+import AnimeTab from "./pages/AnimeTab";
+import DerivativesTab from "./pages/DerivativesTab";
+import TabApp from "./pages/TabApp";
 
 setupIonicReact();
 
@@ -36,10 +43,35 @@ window.addEventListener(
     root.render(<ImageComposition />);
     await RPG.loadItems("/items.json");
 
+    const tabs = [
+      {
+        path: "anime",
+        content: <AnimeTab />,
+        icon: gameControllerOutline,
+        label: "Anime",
+        title: "Anime Character Creation",
+        from: "/",
+      },
+      {
+        path: "derivatives",
+        content: <DerivativesTab />,
+        icon: calculatorOutline,
+        label: "d/dx",
+        title: "Derivatives",
+      },
+      {
+        path: "grids",
+        content: <div>Nothing yet</div>,
+        icon: gridOutline,
+        label: "grids",
+        title: "Grids test",
+      },
+    ];
+
     root.render(
       <React.StrictMode>
         <IonApp>
-          <App />
+          <TabApp tabs={tabs} />
         </IonApp>
       </React.StrictMode>,
     );
