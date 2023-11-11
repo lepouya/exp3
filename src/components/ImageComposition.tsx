@@ -15,6 +15,8 @@ type ImageCompositionProps = {
 
   loadingImage?: ImageProps | string;
   errorImage?: ImageProps | string;
+
+  resetOnChange?: boolean;
 };
 
 export default function ImageComposition(props: ImageCompositionProps) {
@@ -23,6 +25,10 @@ export default function ImageComposition(props: ImageCompositionProps) {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (props.resetOnChange) {
+        setData("");
+      }
+
       if (props.loadingImage) {
         try {
           setData(

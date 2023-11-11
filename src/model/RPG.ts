@@ -190,7 +190,7 @@ class RPG {
   static getItemIcon(...items: RPG.Item[]): ImageOptions {
     const character: RPG.Character = {};
     for (const item of items) {
-      character[item.type] = { item: item.name, rank: "F", count: 1 };
+      character[item.type] = { item: item.name, rank: "none", count: 1 };
     }
     return RPG.getCharacterImage(character, "icon");
   }
@@ -359,6 +359,8 @@ module RPG {
       if (res.ok) {
         const json = await res.json();
         await loadItems(json);
+      } else {
+        console.error(res);
       }
     } else {
       let type: ItemType;
@@ -410,11 +412,15 @@ module RPG {
       Player.registry[this.name] = this;
     }
 
-    static loadPlayers(props: string | Record<string, Partial<Player>>) {
+    static async load(props: string | Record<string, Partial<Player>>) {
       if (typeof props === "string") {
-        fetch(props)
-          .then((res) => res.json())
-          .then(Player.loadPlayers);
+        const res = await fetch(props);
+        if (res.ok) {
+          const json = await res.json();
+          await Player.load(json);
+        } else {
+          console.error(res);
+        }
       } else {
         for (const name in props) {
           try {
