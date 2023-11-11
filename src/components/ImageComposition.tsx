@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import composeImage, { ImageProps } from "../utils/composeImage";
 
@@ -36,10 +36,12 @@ export default function ImageComposition(props: ImageCompositionProps) {
         }
       }
 
-      try {
-        setData((await composeImage([], props)) as string);
-      } catch (e) {
-        setData("error");
+      if (props.sources?.length) {
+        try {
+          setData((await composeImage([], props)) as string);
+        } catch (e) {
+          setData("error");
+        }
       }
 
       if (data === "error" && props.errorImage) {
@@ -58,35 +60,50 @@ export default function ImageComposition(props: ImageCompositionProps) {
     fetchData();
   }, [serializedProps, setData]);
 
+  const imgProps: ImgProps = {
+    width: props.width,
+    height: props.height,
+    style: props.style,
+    className: Array.isArray(props.className)
+      ? props.className.join(" ")
+      : props.className,
+  };
+
   if (!data) {
-    return <Spinner />;
+    return <Spinner {...imgProps} />;
   } else if (data === "error") {
-    return <Bug />;
+    return <Bug {...imgProps} />;
   } else {
-    return <img src={data} />;
+    return <img src={data} {...imgProps} />;
   }
 }
 
-function Spinner() {
+type ImgProps = {
+  width?: number;
+  height?: number;
+  style?: React.CSSProperties;
+  className?: string;
+};
+
+function Spinner({ width, height, style, className }: ImgProps = {}) {
   return (
-    <svg width="128px" height="128px" viewBox="0 0 100 100">
+    <svg
+      width={width || "128px"}
+      height={height || "128px"}
+      viewBox="0 0 100 100"
+      style={style}
+      className={className}
+      fill="var(--ion-color-secondary)"
+    >
       {[...Array(12)].map((_, i) => (
         <g transform={`rotate(${i * 30} 50 50)`} key={i}>
-          <rect
-            x="47"
-            y="24"
-            rx="9.4"
-            ry="4.8"
-            width="6"
-            height="12"
-            fill="var(--ion-color-secondary)"
-          >
+          <rect x="47" y="24" rx="9.4" ry="4.8" width="6" height="12">
             <animate
               attributeName="opacity"
               values="1;0"
               keyTimes="0;1"
               dur="1s"
-              begin={`${(i - 12) / 12}s`}
+              begin={`${i / 12 - 1}s`}
               repeatCount="indefinite"
             />
           </rect>
@@ -96,14 +113,19 @@ function Spinner() {
   );
 }
 
-function Bug() {
+function Bug({ width, height, style, className }: ImgProps = {}) {
   // https://tabler-icons.io/static/tabler-icons/icons/bug.svg
   return (
     <svg
-      width="128px"
-      height="128px"
+      width={width || "128px"}
+      height={height || "128px"}
       viewBox="0 0 24 24"
+      style={style}
+      className={className}
       stroke="var(--ion-color-secondary)"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       fill="none"
     >
       <path d="M9 9v-1a3 3 0 0 1 6 0v1" />
