@@ -1,4 +1,4 @@
-import { ImageProps } from "../utils/composeImage";
+import { ImageOptions, ImageProps } from "../utils/composeImage";
 
 class RPG {
   static addStats(
@@ -74,14 +74,8 @@ class RPG {
     playerItem: RPG.PlayerItem,
     customBoosts: RPG.StatBoost[] = [],
   ): [Record<RPG.StatType, number>, RPG.StatBoost[]] {
-    const item =
-      typeof playerItem.item === "string"
-        ? RPG.itemByName[playerItem.item]
-        : playerItem.item;
-    const rank =
-      typeof playerItem.rank === "string"
-        ? RPG.itemByName[playerItem.rank]
-        : playerItem.rank;
+    const item = RPG.itemByName[playerItem.item];
+    const rank = RPG.itemByName[playerItem.rank];
     const boosts = [
       ...(item?.statBoosts ?? []),
       ...(rank?.statBoosts ?? []),
@@ -92,14 +86,14 @@ class RPG {
     let stats = RPG.addStats(item?.stats ?? {}, rank?.stats ?? {});
     stats = RPG.applyBaseStatBoosts(
       stats,
-      ["STR", "DEX", "MAG"],
+      [...RPG.PrimaryStatTypes],
       ...boosts,
       ...customBoosts,
     );
     stats = RPG.computeDerivativeStats(stats);
     stats = RPG.applyBaseStatBoosts(
       stats,
-      ["HP", "MP", "ATK", "DEF", "SPD", "ACC", "EVA"],
+      [...RPG.SecondaryStatTypes],
       ...boosts,
       ...customBoosts,
     );
@@ -129,37 +123,127 @@ class RPG {
       [{ ...RPG.emptyStats }, [] as RPG.StatBoost[]],
     );
 
-    stats = RPG.applyCumulativeStatBoosts(stats, ...boosts);
+    stats = RPG.applyCumulativeStatBoosts(stats, ...boosts, ...customBoosts);
 
     return stats;
+  }
+
+  static getCharacterImage(
+    character: RPG.Character,
+    layer: keyof typeof RPG.ImageLayers = "main",
+    initOptions: Partial<ImageOptions> = {},
+  ): ImageOptions {
+    const options = { ...initOptions };
+    const layerDims = RPG.ImageLayers[layer];
+    options.sources ||= [];
+    options.width ||= layerDims.width;
+    options.height ||= layerDims.height;
+
+    type OrderedImage = {
+      zIndex: number;
+      order: number;
+      type: string;
+      img: string | ImageProps;
+    };
+    const images: OrderedImage[] = [];
+    function addImageOf(item: RPG.Item) {
+      for (const [zIndex, img] of Object.entries(item?.images?.[layer] || {})) {
+        images.push({
+          zIndex: parseInt(zIndex),
+          order: RPG.ItemsOrder[item.type],
+          type: item.type,
+          img,
+        });
+      }
+    }
+
+    for (const type of RPG.ItemTypes) {
+      const itemName = character[type]?.item;
+      const item = RPG.itemByName[itemName || ""];
+      if (item) {
+        addImageOf(item);
+      }
+
+      if (item?.type === "character" && !character["rank"]) {
+        const rankName = character[type]?.rank;
+        const rank = RPG.itemByName[rankName || ""];
+        if (rank) {
+          addImageOf(rank);
+        }
+      }
+    }
+
+    images.sort((a, b) => {
+      if (a.zIndex !== b.zIndex) {
+        return a.zIndex - b.zIndex;
+      }
+      if (a.order !== b.order) {
+        return a.order - b.order;
+      }
+      return a.type.localeCompare(b.type);
+    });
+
+    options.sources.push(...images.map((img) => img.img));
+    return options;
+  }
+
+  static getItemIcon(...items: RPG.Item[]): ImageOptions {
+    const character: RPG.Character = {};
+    for (const item of items) {
+      character[item.type] = { item: item.name, rank: "F", count: 1 };
+    }
+    return RPG.getCharacterImage(character, "icon");
   }
 }
 
 module RPG {
-  export type StatType =
-    | "STR"
-    | "DEX"
-    | "MAG"
-    | "HP"
-    | "MP"
-    | "ATK"
-    | "DEF"
-    | "SPD"
-    | "ACC"
-    | "EVA";
+  export type StatType = (typeof StatTypes)[number];
+  export const PrimaryStatTypes = <const>["STR", "DEX", "MAG"];
+  export const SecondaryStatTypes = <const>[
+    "HP",
+    "MP",
+    "ATK",
+    "DEF",
+    "SPD",
+    "ACC",
+    "EVA",
+  ];
+  export const StatTypes = <const>[...PrimaryStatTypes, ...SecondaryStatTypes];
 
-  export type ItemType =
-    | "rank"
-    | "character"
-    | "body"
-    | "head"
-    | "feet"
-    | "hand"
-    | "weapon"
-    | "offhand"
-    | "cloak"
-    | "amulet"
-    | "extra";
+  export type ItemType = (typeof ItemTypes)[number];
+  export const ItemTypes = <const>[
+    "rank",
+    "character",
+    "body",
+    "head",
+    "feet",
+    "hand",
+    "weapon",
+    "offhand",
+    "cloak",
+    "amulet",
+    "extra",
+  ];
+
+  export const ImageLayers = <const>{
+    main: { width: 512, height: 1024 },
+    icon: { width: 64, height: 64 },
+    small: { width: 128, height: 256 },
+  };
+
+  export const ItemsOrder: Record<ItemType, number> = <const>{
+    rank: 0,
+    cloak: 1,
+    character: 2,
+    body: 3,
+    head: 4,
+    feet: 4,
+    hand: 4,
+    amulet: 5,
+    extra: 5,
+    offhand: 6,
+    weapon: 7,
+  };
 
   export interface StatBoost {
     stat: StatType;
@@ -180,7 +264,7 @@ module RPG {
     type: ItemType;
     description?: string;
 
-    image: Record<string, ImageProps | string>;
+    images: Record<string, Record<string, ImageProps | string>>;
     style?: Record<string, string>;
     className?: string | string[];
 
@@ -190,8 +274,8 @@ module RPG {
   }
 
   export interface PlayerItem {
-    item: Item | string;
-    rank: Item | string;
+    item: string;
+    rank: string;
     count: number;
 
     uniqueId?: string;
@@ -231,34 +315,64 @@ module RPG {
   export function registerItem(item: Partial<Item>) {
     const type = item.type ?? "extra";
     const newItem: Item = {
-      image: {},
+      images: {},
       ...item,
       name: item.name || type + "-" + (Object.keys(itemByName).length + 1),
       type,
     };
 
+    // Registration
     itemByName[newItem.name] = newItem;
     itemsByType[newItem.type] = itemsByType[newItem.type].filter(
       (c) => c.name !== newItem.name,
     );
     itemsByType[newItem.type].push(newItem);
 
+    // Handle other layers if not present
+    if (!newItem.images.small && newItem.images.main) {
+      newItem.images.small = {};
+      for (const [z, img] of Object.entries(newItem.images.main)) {
+        newItem.images.small[z] = {
+          ...(typeof img === "string" ? { src: img } : img),
+          ..._main2small,
+        };
+      }
+    }
+    if (!newItem.images.icon && newItem.images.main) {
+      newItem.images.icon = {};
+      for (const [z, img] of Object.entries(newItem.images.main)) {
+        newItem.images.icon[z] = {
+          ...(typeof img === "string" ? { src: img } : img),
+          ..._main2icon[newItem.type],
+        };
+      }
+    }
+
     return newItem;
   }
 
-  export function loadItems(url: string) {
-    fetch(url)
-      .then((res) => res.json())
-      .then((items) => {
-        for (const type in items) {
-          for (const name in items[type]) {
-            registerItem({ ...items[type][name], type, name });
+  export async function loadItems(
+    props: string | Record<ItemType, Record<string, Partial<Item>>>,
+  ) {
+    if (typeof props === "string") {
+      const res = await fetch(props);
+      if (res.ok) {
+        const json = await res.json();
+        await loadItems(json);
+      }
+    } else {
+      let type: ItemType;
+      for (type in props) {
+        for (const name in props[type]) {
+          try {
+            registerItem({ ...props[type][name], type, name });
+          } catch (e) {
+            console.error(e);
           }
         }
-      });
+      }
+    }
   }
-
-  loadItems("/items.json");
 }
 
 module RPG {
@@ -296,18 +410,20 @@ module RPG {
       Player.registry[this.name] = this;
     }
 
-    static loadPlayers(url: string) {
-      fetch(url)
-        .then((res) => res.json())
-        .then((players) => {
-          for (const name in players) {
-            try {
-              new Player({ name, ...players[name] });
-            } catch (e) {
-              console.error(e);
-            }
+    static loadPlayers(props: string | Record<string, Partial<Player>>) {
+      if (typeof props === "string") {
+        fetch(props)
+          .then((res) => res.json())
+          .then(Player.loadPlayers);
+      } else {
+        for (const name in props) {
+          try {
+            new Player({ name, ...props[name] });
+          } catch (e) {
+            console.error(e);
           }
-        });
+        }
+      }
     }
 
     static get(name: string) {
@@ -332,3 +448,43 @@ module RPG {
 }
 
 export default RPG;
+
+const _main2small: Partial<ImageProps> = {
+  stretch: {
+    sx: RPG.ImageLayers.small.width / RPG.ImageLayers.main.width,
+    sy: RPG.ImageLayers.small.height / RPG.ImageLayers.main.height,
+  },
+};
+
+function _iconCrop(cx: number, cy: number, size: number) {
+  return {
+    position: {
+      x: 0,
+      y: 0,
+    },
+    crop: {
+      x: cx - size / 2,
+      y: cy - size / 2,
+      w: size,
+      h: size,
+    },
+    stretch: {
+      sx: RPG.ImageLayers.icon.width / size,
+      sy: RPG.ImageLayers.icon.height / size,
+    },
+    smoothing: <ImageSmoothingQuality>"high",
+  };
+}
+const _main2icon: Record<RPG.ItemType, Partial<ImageProps>> = {
+  character: _iconCrop(256, 150, 200),
+  rank: _iconCrop(256, 512, 256),
+  body: _iconCrop(256, 370, 400),
+  head: _iconCrop(256, 128, 200),
+  feet: _iconCrop(256, 870, 200),
+  hand: _iconCrop(128, 480, 128),
+  weapon: _iconCrop(128, 480, 256),
+  offhand: _iconCrop(384, 480, 256),
+  cloak: _iconCrop(256, 370, 400),
+  amulet: _iconCrop(256, 220, 200),
+  extra: _iconCrop(256, 512, 256),
+};

@@ -62,7 +62,6 @@ export default function ImageComposition(props: ImageCompositionProps) {
 
   const imgProps: ImgProps = {
     width: props.width,
-    height: props.height,
     style: props.style,
     className: Array.isArray(props.className)
       ? props.className.join(" ")
@@ -80,16 +79,15 @@ export default function ImageComposition(props: ImageCompositionProps) {
 
 type ImgProps = {
   width?: number;
-  height?: number;
   style?: React.CSSProperties;
   className?: string;
 };
 
-function Spinner({ width, height, style, className }: ImgProps = {}) {
+function Spinner({ width, style, className }: ImgProps = {}) {
   return (
     <svg
       width={width || "128px"}
-      height={height || "128px"}
+      height={width || "128px"}
       viewBox="0 0 100 100"
       style={style}
       className={className}
@@ -113,12 +111,12 @@ function Spinner({ width, height, style, className }: ImgProps = {}) {
   );
 }
 
-function Bug({ width, height, style, className }: ImgProps = {}) {
+function Bug({ width, style, className }: ImgProps = {}) {
   // https://tabler-icons.io/static/tabler-icons/icons/bug.svg
   return (
     <svg
       width={width || "128px"}
-      height={height || "128px"}
+      height={width || "128px"}
       viewBox="0 0 24 24"
       style={style}
       className={className}

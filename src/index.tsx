@@ -20,16 +20,22 @@ import { createRoot } from "react-dom/client";
 import { IonApp, setupIonicReact } from "@ionic/react";
 
 import App from "./App";
+import ImageComposition from "./components/ImageComposition";
+import RPG from "./model/RPG";
 
 setupIonicReact();
 
 window.addEventListener(
   "load",
-  () => {
+  async () => {
     const div = document.createElement("div");
     div.id = "root";
     document.body.appendChild(div);
     const root = createRoot(div);
+
+    root.render(<ImageComposition />);
+    await RPG.loadItems("/items.json");
+
     root.render(
       <React.StrictMode>
         <IonApp>

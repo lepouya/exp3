@@ -20,7 +20,9 @@ RPG.registerItem({
 });
 
 test("correct stats on item", () => {
-  expect(RPG.computeItemStats({ item: "w1", rank: "r0" })[0]).to.deep.equal({
+  expect(
+    RPG.computeItemStats({ item: "w1", rank: "r0", count: 1 })[0],
+  ).to.deep.equal({
     ...RPG.emptyStats,
     ATK: 10,
     SPD: 10,
@@ -28,7 +30,9 @@ test("correct stats on item", () => {
 });
 
 test("correct derivative stats on base", () => {
-  expect(RPG.computeItemStats({ item: "b1", rank: "r0" })[0]).to.deep.equal({
+  expect(
+    RPG.computeItemStats({ item: "b1", rank: "r0", count: 1 })[0],
+  ).to.deep.equal({
     STR: 10,
     DEX: 10,
     MAG: 0,
@@ -43,7 +47,9 @@ test("correct derivative stats on base", () => {
 });
 
 test("correct derivative stats on character", () => {
-  expect(RPG.computeItemStats({ item: "c1", rank: "r0" })[0]).to.deep.equal({
+  expect(
+    RPG.computeItemStats({ item: "c1", rank: "r0", count: 1 })[0],
+  ).to.deep.equal({
     STR: 5,
     DEX: 5,
     MAG: 5,
@@ -60,9 +66,9 @@ test("correct derivative stats on character", () => {
 test("correct stats on character", () => {
   expect(
     RPG.computeCharacterStats({
-      character: { item: "c1", rank: "r0" },
-      body: { item: "b1", rank: "r0" },
-      weapon: { item: "w1", rank: "r0" },
+      character: { item: "c1", rank: "r0", count: 1 },
+      body: { item: "b1", rank: "r0", count: 1 },
+      weapon: { item: "w1", rank: "r0", count: 1 },
     }),
   ).to.deep.equal({
     STR: 15,
@@ -107,13 +113,17 @@ RPG.registerItem({
 });
 
 test("correct stats on item with rank boosts", () => {
-  expect(RPG.computeItemStats({ item: "w1", rank: "r1" })[0]).to.deep.equal({
+  expect(
+    RPG.computeItemStats({ item: "w1", rank: "r1", count: 1 })[0],
+  ).to.deep.equal({
     ...RPG.emptyStats,
     ATK: 20,
     DEF: 10,
     SPD: 10,
   });
-  expect(RPG.computeItemStats({ item: "w1", rank: "r2" })[0]).to.deep.equal({
+  expect(
+    RPG.computeItemStats({ item: "w1", rank: "r2", count: 1 })[0],
+  ).to.deep.equal({
     ...RPG.emptyStats,
     ATK: 30,
     DEF: 20,
@@ -124,7 +134,9 @@ test("correct stats on item with rank boosts", () => {
 });
 
 test("correct derivative stats with rank boosts", () => {
-  expect(RPG.computeItemStats({ item: "b1", rank: "r1" })[0]).to.deep.equal({
+  expect(
+    RPG.computeItemStats({ item: "b1", rank: "r1", count: 1 })[0],
+  ).to.deep.equal({
     STR: 10,
     DEX: 10,
     MAG: 0,
@@ -136,7 +148,9 @@ test("correct derivative stats with rank boosts", () => {
     ACC: 5,
     EVA: 2.5,
   });
-  expect(RPG.computeItemStats({ item: "b1", rank: "r2" })[0]).to.deep.equal({
+  expect(
+    RPG.computeItemStats({ item: "b1", rank: "r2", count: 1 })[0],
+  ).to.deep.equal({
     STR: 12.5,
     DEX: 12.5,
     MAG: 0,
