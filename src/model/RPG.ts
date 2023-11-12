@@ -365,19 +365,21 @@ module RPG {
     if (!newItem.images.small && newItem.images.main) {
       newItem.images.small = {};
       for (const [z, img] of Object.entries(newItem.images.main)) {
-        newItem.images.small[z] = {
-          ...(typeof img === "string" ? { src: img } : img),
-          ..._main2small,
-        };
+        const src = typeof img === "string" ? { src: img } : { ...img };
+        newItem.images.small[z] = src;
+        if (src.src !== "transparent" && !src.src.startsWith("plain:")) {
+          newItem.images.small[z] = { ...src, ..._main2small };
+        }
       }
     }
     if (!newItem.images.icon && newItem.images.main) {
       newItem.images.icon = {};
       for (const [z, img] of Object.entries(newItem.images.main)) {
-        newItem.images.icon[z] = {
-          ...(typeof img === "string" ? { src: img } : img),
-          ..._main2icon[newItem.type],
-        };
+        const src = typeof img === "string" ? { src: img } : { ...img };
+        newItem.images.icon[z] = src;
+        if (src.src !== "transparent" && !src.src.startsWith("plain:")) {
+          newItem.images.icon[z] = { ...src, ..._main2icon[newItem.type] };
+        }
       }
     }
 

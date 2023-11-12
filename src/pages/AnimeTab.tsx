@@ -17,10 +17,10 @@ export default function AnimeTab() {
   const [char, setChar] = React.useState<Record<string, string>>({
     rank: "E",
     character: "Girl 2",
-    body: "Dress 1",
-    head: "Cap 2",
-    feet: "Leather Boots 1",
-    hand: "Leather Gloves 1",
+    body: "Tattered Rags",
+    head: "Flower Head 1",
+    feet: "Bandaged Feet",
+    hand: "Bandaged Arms",
   });
 
   return (
@@ -70,6 +70,7 @@ export default function AnimeTab() {
                     { item: name, rank: "F", count: 1 },
                   ]),
               ),
+              "main",
             )}
           />
         </IonCol>
