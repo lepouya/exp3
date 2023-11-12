@@ -1,7 +1,6 @@
 ## TODO
 
 - Resource save and load
-- Image filters for better stitching
 - App and Fav Icons
 - Grids
 - Turn image composition into an npm lib

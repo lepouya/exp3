@@ -16,7 +16,7 @@ type ImageCompositionProps = {
   loadingImage?: ImageProps | string;
   errorImage?: ImageProps | string;
 
-  resetOnChange?: boolean;
+  clearOnChange?: boolean;
 };
 
 export default function ImageComposition(props: ImageCompositionProps) {
@@ -25,18 +25,17 @@ export default function ImageComposition(props: ImageCompositionProps) {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (props.resetOnChange) {
+      if (props.clearOnChange) {
         setData("");
       }
 
       if (props.loadingImage) {
         try {
-          setData(
-            (await composeImage([], {
-              ...props,
-              sources: [props.loadingImage],
-            })) as string,
-          );
+          const img = await composeImage([], {
+            ...props,
+            sources: [props.loadingImage],
+          });
+          setData(img.dataURL);
         } catch {
           setData("error");
         }
@@ -44,7 +43,8 @@ export default function ImageComposition(props: ImageCompositionProps) {
 
       if (props.sources?.length) {
         try {
-          setData((await composeImage([], props)) as string);
+          const img = await composeImage([], props);
+          setData(img.dataURL);
         } catch (e) {
           setData("error");
         }
@@ -52,12 +52,11 @@ export default function ImageComposition(props: ImageCompositionProps) {
 
       if (data === "error" && props.errorImage) {
         try {
-          setData(
-            (await composeImage([], {
-              ...props,
-              sources: [props.errorImage],
-            })) as string,
-          );
+          const img = await composeImage([], {
+            ...props,
+            sources: [props.errorImage],
+          });
+          setData(img.dataURL);
         } catch {
           setData("error");
         }

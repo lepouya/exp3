@@ -1,4 +1,4 @@
-import { ImageOptions, ImageProps } from "../utils/composeImage";
+import composeImage, { ImageOptions, ImageProps } from "../utils/composeImage";
 
 class RPG {
   static addStats(
@@ -143,33 +143,59 @@ class RPG {
       zIndex: number;
       order: number;
       type: string;
-      img: string | ImageProps;
+      img: ImageProps;
     };
     const images: OrderedImage[] = [];
-    function addImageOf(item: RPG.Item) {
+
+    let mainRank: RPG.Item =
+      RPG.itemByName[
+        character["rank"]?.item || character["character"]?.rank || "none"
+      ] || RPG.itemByName["none"];
+
+    for (const type of RPG.ItemTypes) {
+      const item =
+        type === "rank"
+          ? mainRank
+          : RPG.itemByName[character[type]?.item || ""];
+
+      let firstLayer = true;
       for (const [zIndex, img] of Object.entries(item?.images?.[layer] || {})) {
+        const imageProps = typeof img === "string" ? { src: img } : { ...img };
+
+        if (type !== "rank" && item.dominantColor && firstLayer) {
+          const filter = (imageProps.filter = Array.isArray(imageProps.filter)
+            ? imageProps.filter
+            : imageProps.filter
+            ? [imageProps.filter]
+            : []);
+          const color = [
+            item.dominantColor.r,
+            item.dominantColor.g,
+            item.dominantColor.b,
+          ]
+            .map((c) => c.toString(16).padStart(2, "0"))
+            .join("");
+          const factor = layerDims.width / RPG.ImageLayers.main.width;
+          const addShadow = (x: number, y: number) =>
+            filter.push(
+              `drop-shadow(${x * factor}px ${y * factor}px ${
+                (Math.max(x, y) * factor) / 2
+              }px #${color})`,
+            );
+
+          addShadow(item.stiching?.right ?? 5, 0);
+          addShadow(-(item.stiching?.left ?? 5), 0);
+          addShadow(0, item.stiching?.bottom ?? 5);
+          addShadow(0, -(item.stiching?.top ?? 5));
+          firstLayer = false;
+        }
+
         images.push({
           zIndex: parseInt(zIndex),
           order: RPG.ItemsOrder[item.type],
           type: item.type,
-          img,
+          img: imageProps,
         });
-      }
-    }
-
-    for (const type of RPG.ItemTypes) {
-      const itemName = character[type]?.item;
-      const item = RPG.itemByName[itemName || ""];
-      if (item) {
-        addImageOf(item);
-      }
-
-      if (item?.type === "character" && !character["rank"]) {
-        const rankName = character[type]?.rank;
-        const rank = RPG.itemByName[rankName || ""];
-        if (rank) {
-          addImageOf(rank);
-        }
       }
     }
 
@@ -187,12 +213,16 @@ class RPG {
     return options;
   }
 
-  static getItemIcon(...items: RPG.Item[]): ImageOptions {
+  static getItemImage(
+    item: RPG.Item | RPG.Item[],
+    layer: keyof typeof RPG.ImageLayers = "main",
+  ): ImageOptions {
+    const items = Array.isArray(item) ? item : [item];
     const character: RPG.Character = {};
     for (const item of items) {
       character[item.type] = { item: item.name, rank: "none", count: 1 };
     }
-    return RPG.getCharacterImage(character, "icon");
+    return RPG.getCharacterImage(character, layer);
   }
 }
 
@@ -235,14 +265,14 @@ module RPG {
     rank: 0,
     cloak: 1,
     character: 2,
-    body: 3,
-    head: 4,
-    feet: 4,
-    hand: 4,
-    amulet: 5,
-    extra: 5,
-    offhand: 6,
-    weapon: 7,
+    feet: 3,
+    hand: 3,
+    body: 4,
+    head: 5,
+    amulet: 6,
+    extra: 6,
+    offhand: 7,
+    weapon: 8,
   };
 
   export interface StatBoost {
@@ -267,6 +297,9 @@ module RPG {
     images: Record<string, Record<string, ImageProps | string>>;
     style?: Record<string, string>;
     className?: string | string[];
+
+    dominantColor?: { r: number; g: number; b: number };
+    stiching?: Partial<Record<"left" | "right" | "top" | "bottom", number>>;
 
     stats?: Partial<Record<StatType, number>>;
     statBoosts?: StatBoost[];
@@ -367,7 +400,13 @@ module RPG {
       for (type in props) {
         for (const name in props[type]) {
           try {
-            registerItem({ ...props[type][name], type, name });
+            const item = registerItem({ ...props[type][name], type, name });
+            if (!item.dominantColor) {
+              const img = RPG.getItemImage(item);
+              const composed = await composeImage([], img);
+              const dominantColor = await composed.dominantColor;
+              item.dominantColor = dominantColor;
+            }
           } catch (e) {
             console.error(e);
           }

@@ -15,7 +15,12 @@ import Format from "../utils/format";
 
 export default function AnimeTab() {
   const [char, setChar] = React.useState<Record<string, string>>({
-    character: "Guy 1",
+    rank: "E",
+    character: "Girl 2",
+    body: "Dress 1",
+    head: "Cap 2",
+    feet: "Leather Boots 1",
+    hand: "Leather Gloves 1",
   });
 
   return (
@@ -44,10 +49,11 @@ export default function AnimeTab() {
               </IonSelect>
               &nbsp;
               <ImageComposition
-                {...RPG.getItemIcon(
+                {...RPG.getItemImage(
                   RPG.itemByName[char[type] || "none"] ||
                     RPG.itemByName["none"] ||
                     {},
+                  "icon",
                 )}
               />
             </IonItem>
@@ -55,7 +61,6 @@ export default function AnimeTab() {
         </IonCol>
         <IonCol size="12" size-md="6" size-lg="8">
           <ImageComposition
-            resetOnChange={true}
             {...RPG.getCharacterImage(
               Object.fromEntries(
                 Object.entries(char)

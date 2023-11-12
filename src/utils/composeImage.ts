@@ -24,17 +24,80 @@ export interface ImageOptions {
   height?: number;
   style?: Record<string, string>;
   className?: string | string[];
-
-  returnType?: "blob" | "objectUrl" | "dataUrl";
 }
 
 export class ImageLoadingError extends Error {}
 export class ImageRenderingError extends Error {}
 
+export class ComposedImage {
+  readonly canvas: HTMLCanvasElement;
+  readonly options: ImageOptions;
+  constructor(canvas: HTMLCanvasElement, options: ImageOptions) {
+    this.canvas = canvas;
+    this.options = options;
+  }
+
+  get dataURL(): string {
+    return this.canvas.toDataURL(this.options.format, this.options.quality);
+  }
+
+  get blob(): Promise<Blob> {
+    return new Promise((resolve, reject) =>
+      this.canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new ImageRenderingError())),
+        this.options.format,
+        this.options.quality,
+      ),
+    );
+  }
+
+  get dominantColor(): Promise<{ r: number; g: number; b: number }> {
+    return new Promise((resolve, reject) => {
+      let data: ImageData | undefined = undefined;
+      try {
+        const context = this.canvas.getContext("2d")!;
+        data = context.getImageData(
+          0,
+          0,
+          this.canvas.width,
+          this.canvas.height,
+        );
+      } catch {
+        data = undefined;
+      }
+
+      if (!data) {
+        reject(new ImageRenderingError());
+        return;
+      }
+
+      let denom = 0;
+      const rgb = { r: 0, g: 0, b: 0 };
+      const len = data.data.length;
+      for (let i = 0; i < len; i += 4) {
+        const r = data.data[i];
+        const g = data.data[i + 1];
+        const b = data.data[i + 2];
+        const a = data.data[i + 3];
+
+        denom += a;
+        rgb.r += r * a;
+        rgb.g += g * a;
+        rgb.b += b * a;
+      }
+
+      rgb.r = ~~(rgb.r / denom);
+      rgb.g = ~~(rgb.g / denom);
+      rgb.b = ~~(rgb.b / denom);
+      resolve(rgb);
+    });
+  }
+}
+
 export default async function composeImage(
   sources?: (ImageProps | string)[],
   options?: ImageOptions,
-): Promise<Blob | string> {
+): Promise<ComposedImage> {
   const opts = Object.assign({}, defaultOptions, options);
   const srcs = [...(sources || []), ...(opts?.sources || [])];
   const imgs = await Promise.all(srcs.map((src) => loadImage(src, opts)));
@@ -94,7 +157,7 @@ export default async function composeImage(
         : "low";
 
     // CSS filters
-    if (props.filter && Array.isArray(props.filter)) {
+    if (Array.isArray(props.filter)) {
       context.filter = props.filter.join(" ");
     } else if (props.filter) {
       context.filter = props.filter;
@@ -120,23 +183,7 @@ export default async function composeImage(
     context.restore();
   }
 
-  if (opts.returnType === "dataUrl") {
-    return canvas.toDataURL(opts.format, opts.quality);
-  }
-
-  const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new ImageRenderingError())),
-      opts.format,
-      opts.quality,
-    ),
-  );
-
-  if (opts.returnType === "objectUrl") {
-    return URL.createObjectURL(blob);
-  }
-
-  return blob;
+  return new ComposedImage(canvas, opts);
 }
 
 export function loadImage(
@@ -186,7 +233,6 @@ interface Angle {
 const defaultOptions: ImageOptions = {
   format: "image/png",
   quality: 0.92,
-  returnType: "dataUrl",
 };
 
 const transparentGif =
