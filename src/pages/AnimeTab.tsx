@@ -15,10 +15,9 @@ import Format from "../utils/format";
 
 export default function AnimeTab() {
   const [char, setChar] = React.useState<Record<string, string>>({
-    rank: "E",
     character: "Girl 2",
     body: "Tattered Rags",
-    head: "Flower Head 1",
+    head: "Flower Head",
     feet: "Bandaged Feet",
     hand: "Bandaged Arms",
   });
