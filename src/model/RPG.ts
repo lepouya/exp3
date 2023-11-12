@@ -158,11 +158,11 @@ class RPG {
           ? mainRank
           : RPG.itemByName[character[type]?.item || ""];
 
-      let firstLayer = true;
+      let firstLayerFactor = 1;
       for (const [zIndex, img] of Object.entries(item?.images?.[layer] || {})) {
         const imageProps = typeof img === "string" ? { src: img } : { ...img };
 
-        if (type !== "rank" && item.dominantColor && firstLayer) {
+        if (type !== "rank" && item.dominantColor) {
           const filter = (imageProps.filter = Array.isArray(imageProps.filter)
             ? imageProps.filter
             : imageProps.filter
@@ -183,11 +183,11 @@ class RPG {
               }px #${color})`,
             );
 
-          addShadow(item.stiching?.right ?? 5, 0);
-          addShadow(-(item.stiching?.left ?? 5), 0);
-          addShadow(0, item.stiching?.bottom ?? 5);
-          addShadow(0, -(item.stiching?.top ?? 5));
-          firstLayer = false;
+          addShadow(firstLayerFactor * (item.stiching?.right ?? 5), 0);
+          addShadow(-firstLayerFactor * (item.stiching?.left ?? 5), 0);
+          addShadow(0, firstLayerFactor * (item.stiching?.bottom ?? 5));
+          addShadow(0, -firstLayerFactor * (item.stiching?.top ?? 5));
+          firstLayerFactor = 0.5;
         }
 
         images.push({
@@ -533,5 +533,5 @@ const _main2icon: Record<RPG.ItemType, Partial<ImageProps>> = {
   offhand: _iconCrop(384, 480, 256),
   cloak: _iconCrop(256, 370, 400),
   amulet: _iconCrop(256, 220, 200),
-  extra: _iconCrop(256, 512, 256),
+  extra: _iconCrop(256, 160, 256),
 };

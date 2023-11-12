@@ -135,6 +135,14 @@
           "2": "character/char-007-2.png"
         }
       }
+    },
+    "Catgirl": {
+      "images": {
+        "main": {
+          "0": "character/char-008-0.png",
+          "2": "character/char-008-2.png"
+        }
+      }
     }
   },
   "body": {
@@ -268,28 +276,28 @@
     "Sword 1": {
       "images": {
         "main": {
-          "1": "weapon/weapon-000-1.png"
+          "2": "weapon/weapon-000-2.png"
         }
       }
     },
     "Wand 1": {
       "images": {
         "main": {
-          "1": "weapon/weapon-001-1.png"
+          "2": "weapon/weapon-001-2.png"
         }
       }
     },
     "Sword 2": {
       "images": {
         "main": {
-          "1": "weapon/weapon-002-1.png"
+          "2": "weapon/weapon-002-2.png"
         }
       }
     },
     "Staff 1": {
       "images": {
         "main": {
-          "1": "weapon/weapon-003-1.png"
+          "2": "weapon/weapon-003-2.png"
         }
       }
     }
@@ -299,6 +307,77 @@
       "images": {
         "main": {
           "1": "offhand/offhand-000-1.png"
+        }
+      }
+    },
+    "Peace Flower": {
+      "images": {
+        "main": {
+          "1": "offhand/offhand-001-1.png"
+        }
+      }
+    },
+    "Steak Knife": {
+      "images": {
+        "main": {
+          "1": "offhand/offhand-002-1.png"
+        }
+      }
+    }
+  },
+  "cloak": {
+    "Tattered Cloak": {
+      "images": {
+        "main": {
+          "0": "cloak/cloak-000-0.png",
+          "2": "cloak/cloak-000-2.png"
+        }
+      }
+    },
+    "Red Cloak": {
+      "images": {
+        "main": {
+          "0": "cloak/cloak-001-0.png",
+          "2": "cloak/cloak-001-2.png"
+        }
+      }
+    }
+  },
+  "amulet": {
+    "Simple Chain": {
+      "images": {
+        "main": {
+          "2": "amulet/amulet-000-2.png"
+        }
+      }
+    },
+    "Red Choker": {
+      "images": {
+        "main": {
+          "2": "amulet/amulet-001-2.png"
+        }
+      }
+    },
+    "Magic Amulet": {
+      "images": {
+        "main": {
+          "2": "amulet/amulet-002-2.png"
+        }
+      }
+    }
+  },
+  "extra": {
+    "Eye Patch": {
+      "images": {
+        "main": {
+          "2": "extra/extra-000-2.png"
+        }
+      }
+    },
+    "Pixie Companion": {
+      "images": {
+        "main": {
+          "1": "extra/extra-001-1.png"
         }
       }
     }
