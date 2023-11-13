@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 
 import Resource, { ResourceManager } from "../model/Resource";
 import Format from "../utils/format";
+import Icon from "./Icon";
 
 export type ResourceRenderProps = {
   resource?: Partial<Resource> | string;
@@ -72,7 +73,7 @@ export default function ResourceRender({
 }: ResourceRenderProps) {
   resource =
     typeof resource === "string"
-      ? ResourceManager.singleton.resolve(resource)
+      ? ResourceManager.get(resource)
       : resource ?? {};
 
   const res = Format.resource(resource, {
@@ -106,10 +107,7 @@ export default function ResourceRender({
   if ((showIcon && resource.icon) || (showName && res.name)) {
     output.push(
       <div className="name" key="name">
-        {
-          showIcon && resource.icon
-          // && <Icon icon={resource.icon} size="1em" />
-        }
+        {showIcon && resource.icon && <Icon icon={resource.icon} size="1em" />}
         {showName && res.name}
         {(showValue || showRate) && (infix ?? ":")}
       </div>,
