@@ -1,3 +1,4 @@
+import { gameControllerOutline } from "ionicons/icons";
 import React from "react";
 
 import {
@@ -10,6 +11,7 @@ import {
 } from "@ionic/react";
 
 import ImageComposition from "../components/ImageComposition";
+import Game from "../model/Game";
 import RPG from "../model/RPG";
 import Format from "../utils/format";
 
@@ -77,3 +79,14 @@ export default function AnimeTab() {
     </IonGrid>
   );
 }
+
+AnimeTab.init = () => {
+  Game.Tab.register({
+    path: "anime",
+    content: <AnimeTab />,
+    icon: gameControllerOutline,
+    label: "Anime",
+    title: "Anime Character Creation",
+    from: "/",
+  });
+};

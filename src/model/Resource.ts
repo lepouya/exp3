@@ -163,7 +163,7 @@ export default class Resource {
   fill(res: Partial<Resource>): this {
     let k: keyof Resource;
     for (k in res) {
-      if (k === "extra") {
+      if (k === "extra" || k === "rate" || k === "execution") {
         Object.assign(this[k], res[k]);
       } else if (k === "count" || k === "maxCount" || k === "minCount") {
         if (res[k] != undefined) {
@@ -516,6 +516,14 @@ export class ResourceManager {
 
   readonly resources: Record<string, Resource> = {};
 
+  ticksPerSecond: number = 50;
+  rendersPerSecond: number = 10;
+  saveFrequencySecs: number = 60;
+
+  lastReset: number = Date.now();
+  lastSaved: number = 0;
+  lastLoaded: number = Date.now();
+  lastRender: number = 0;
   lastTick?: number;
 
   rateUpdateSecs = 0.1;
@@ -527,6 +535,7 @@ export class ResourceManager {
   globalTimeDilation = 1.0;
   globalNumberFormat?: string;
   globalSellRatio: DecimalSource = 1;
+  globalBuyAmount: string = "+1";
 
   gainFactor?: (m: DecimalSource) => DecimalSource;
   costFactor?: (m: DecimalSource) => DecimalSource;
@@ -549,19 +558,127 @@ export class ResourceManager {
 
   static reset(settings?: Partial<ResourceManager>) {
     const rm = new ResourceManager();
-    if (settings) {
-      let k: keyof ResourceManager;
-      for (k in settings) {
-        if (k === "resources" || k === "execution") {
-          Object.assign(rm[k], settings[k]);
-        } else if (settings[k] != undefined) {
-          (rm as any)[k] = settings[k];
-        }
+    rm.load(settings);
+    ResourceManager.singleton = rm;
+    return rm;
+  }
+
+  static load(settings?: Partial<ResourceManager> | string) {
+    return ResourceManager.singleton.load(settings);
+  }
+
+  static save() {
+    return ResourceManager.singleton.save();
+  }
+
+  static upsert(props: Partial<Resource> | string) {
+    return ResourceManager.singleton.upsert(props);
+  }
+
+  static get(res: Partial<Resource> | string) {
+    return ResourceManager.singleton.resolve(res);
+  }
+
+  static resolveAll(rcs: ResourceCount[]) {
+    return ResourceManager.singleton.resolveAll(rcs);
+  }
+
+  static combineAll(rcs: ResourceCount<"resolved">[]) {
+    return ResourceManager.singleton.combineAll(rcs);
+  }
+
+  static canAfford(cost: ResourceCount<"resolved">[], toSpend = true) {
+    return ResourceManager.singleton.canAfford(cost, toSpend);
+  }
+
+  static purchase(
+    toBuy: ResourceCount[],
+    style: PurchaseStyle = "partial",
+    dry: boolean = false,
+    gainFactor: DecimalSource = 1,
+    costFactor: DecimalSource = 1,
+    countOverride?: DecimalSource,
+  ) {
+    return ResourceManager.singleton.purchase(
+      toBuy,
+      style,
+      dry,
+      gainFactor,
+      costFactor,
+      countOverride,
+    );
+  }
+
+  static purchaseAll(
+    resources: Record<string, DecimalSource | undefined>,
+    amount: PurchaseAmount,
+    style: PurchaseStyle = "partial",
+    dry: boolean = false,
+    gainFactor: DecimalSource = 1,
+    costFactor: DecimalSource = 1,
+    countOverride?: DecimalSource,
+  ) {
+    return ResourceManager.singleton.purchaseAll(
+      resources,
+      amount,
+      style,
+      dry,
+      gainFactor,
+      costFactor,
+      countOverride,
+    );
+  }
+
+  static tick(
+    now?: number,
+    source?: string,
+    onSave?: (data: string) => void,
+    onRender?: () => void,
+  ) {
+    return ResourceManager.singleton.tick(now, source, onSave, onRender);
+  }
+
+  load(settings?: Partial<ResourceManager> | string): this {
+    if (!settings) {
+      return this;
+    }
+
+    if (typeof settings === "string") {
+      return this.load(JSON.parse(settings));
+    }
+
+    let k: keyof ResourceManager;
+    for (k in settings) {
+      if (settings[k] == undefined || settings[k] == null) {
+        continue;
+      } else if (k === "resources") {
+        Object.values(settings[k] ?? {}).forEach((res) => this.upsert(res));
+      } else if (k === "execution") {
+        Object.assign(this[k], settings[k]);
+      } else {
+        (this as any)[k] = settings[k];
       }
     }
 
-    ResourceManager.singleton = rm;
-    return rm;
+    this.lastLoaded = Date.now();
+    return this;
+  }
+
+  save(): string {
+    this.lastSaved = Date.now();
+    return JSON.stringify(
+      this,
+      (k, v) => {
+        if (!k || !v) {
+          return v;
+        } else if (v instanceof ResourceManager || k.startsWith("_")) {
+          return undefined;
+        }
+
+        return v;
+      },
+      2,
+    );
   }
 
   upsert(props: Partial<Resource> | string): Resource {
@@ -707,7 +824,12 @@ export class ResourceManager {
     };
   }
 
-  tick(now: number = Date.now(), source: string = "unknown"): any[] {
+  tick(
+    now: number = Date.now(),
+    source: string = "unknown",
+    onSave?: (data: string) => void,
+    onRender?: () => void,
+  ): any[] {
     // Figure out how long it's been since last tick
     let dt = Math.min(
       Math.max((now - (this.lastTick ?? now)) / 1000, 0),
@@ -878,6 +1000,23 @@ export class ResourceManager {
       if (updateResult) {
         results["__ResourceManager_onUpdateComplete"] = [updateResult];
       }
+    }
+
+    // Callbacks for save and render in game loop
+    if (
+      onSave &&
+      this.lastTick - this.lastSaved >= this.saveFrequencySecs * 1000 &&
+      this.lastTick - this.lastLoaded >= this.saveFrequencySecs * 1000
+    ) {
+      onSave(this.save());
+    }
+
+    if (
+      onRender &&
+      this.lastTick - this.lastRender >= 1000.0 / this.rendersPerSecond
+    ) {
+      this.lastRender = this.lastTick;
+      onRender();
     }
 
     return this.execution[source].lastResult;

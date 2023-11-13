@@ -1,4 +1,3 @@
-import React from "react";
 import { Redirect, Route } from "react-router-dom";
 
 import {
@@ -16,18 +15,10 @@ import {
 } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 
-type TabProps = {
-  path: string;
-  content: React.ReactNode;
+import Game from "../model/Game";
 
-  icon?: string;
-  label?: string;
-  title?: string;
-
-  from?: string;
-};
-
-export default function TabApp({ tabs }: { tabs: TabProps[] }) {
+export default function TabApp() {
+  const tabs = Game.useTabs();
   return (
     <IonReactRouter>
       <IonTabs>
@@ -53,16 +44,19 @@ export default function TabApp({ tabs }: { tabs: TabProps[] }) {
             ))}
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
-          {tabs.map((tab) => (
-            <IonTabButton
-              tab={tab.path}
-              href={`/${tab.path}`}
-              key={`tab-button-${tab.path}`}
-            >
-              {tab.icon && <IonIcon aria-hidden="true" icon={tab.icon} />}
-              {tab.label && <IonLabel>{tab.label}</IonLabel>}
-            </IonTabButton>
-          ))}
+          {tabs.map(
+            (tab) =>
+              (tab.icon || tab.label) && (
+                <IonTabButton
+                  tab={tab.path}
+                  href={`/${tab.path}`}
+                  key={`tab-button-${tab.path}`}
+                >
+                  {tab.icon && <IonIcon aria-hidden="true" icon={tab.icon} />}
+                  {tab.label && <IonLabel>{tab.label}</IonLabel>}
+                </IonTabButton>
+              ),
+          )}
         </IonTabBar>
       </IonTabs>
     </IonReactRouter>
