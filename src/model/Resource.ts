@@ -666,7 +666,7 @@ export class ResourceManager {
 
   save(): Partial<ResourceManager> {
     this.lastSaved = Date.now();
-    return { ...this };
+    return this;
   }
 
   upsert(props: Partial<Resource> | string): Resource {

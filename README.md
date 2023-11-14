@@ -1,5 +1,6 @@
 ## TODO
 
+- Finish porting the derivatives tab
 - App and Fav Icons
   - https://capacitorjs.com/docs/android/configuration
 - Grids

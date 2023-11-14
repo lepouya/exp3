@@ -38,6 +38,7 @@ window.addEventListener(
     const root = createRoot(div);
 
     root.render(<ImageComposition />);
+    await Game.Database.initialize();
     await RPG.loadItems("/items.json");
     AnimeTab.init();
     DerivativesTab.init();
