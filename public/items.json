@@ -143,6 +143,14 @@
           "2": "character/char-008-2.png"
         }
       }
+    },
+    "Robot 9000": {
+      "images": {
+        "main": {
+          "0": "character/char-009-0.png",
+          "2": "character/char-009-2.png"
+        }
+      }
     }
   },
   "body": {
