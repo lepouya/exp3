@@ -632,7 +632,7 @@ export class ResourceManager {
   static tick(
     now?: number,
     source?: string,
-    onSave?: (data: string) => void,
+    onSave?: () => void,
     onRender?: () => void,
   ) {
     return ResourceManager.singleton.tick(now, source, onSave, onRender);
@@ -664,21 +664,9 @@ export class ResourceManager {
     return this;
   }
 
-  save(): string {
+  save(): Partial<ResourceManager> {
     this.lastSaved = Date.now();
-    return JSON.stringify(
-      this,
-      (k, v) => {
-        if (!k || !v) {
-          return v;
-        } else if (v instanceof ResourceManager || k.startsWith("_")) {
-          return undefined;
-        }
-
-        return v;
-      },
-      2,
-    );
+    return { ...this };
   }
 
   upsert(props: Partial<Resource> | string): Resource {
@@ -827,8 +815,8 @@ export class ResourceManager {
   tick(
     now: number = Date.now(),
     source: string = "unknown",
-    onSave?: (data: string) => void,
-    onRender?: () => void,
+    onSave?: (rm?: this) => void,
+    onRender?: (rm?: this) => void,
   ): any[] {
     // Figure out how long it's been since last tick
     let dt = Math.min(
@@ -1008,7 +996,8 @@ export class ResourceManager {
       this.lastTick - this.lastSaved >= this.saveFrequencySecs * 1000 &&
       this.lastTick - this.lastLoaded >= this.saveFrequencySecs * 1000
     ) {
-      onSave(this.save());
+      this.lastSaved = this.lastTick;
+      onSave(this);
     }
 
     if (
@@ -1016,7 +1005,7 @@ export class ResourceManager {
       this.lastTick - this.lastRender >= 1000.0 / this.rendersPerSecond
     ) {
       this.lastRender = this.lastTick;
-      onRender();
+      onRender(this);
     }
 
     return this.execution[source].lastResult;

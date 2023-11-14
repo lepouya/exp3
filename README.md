@@ -1,7 +1,7 @@
 ## TODO
 
-- Resource save and load
 - App and Fav Icons
+  - https://capacitorjs.com/docs/android/configuration
 - Grids
 - Options page
 - Turn image composition into an npm lib

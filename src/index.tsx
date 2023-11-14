@@ -41,6 +41,9 @@ window.addEventListener(
     await RPG.loadItems("/items.json");
     AnimeTab.init();
     DerivativesTab.init();
+    await Game.ResourceManager.load();
+
+    // For fun
     setTimeout(
       () =>
         Game.Tab.register({

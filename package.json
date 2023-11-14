@@ -17,7 +17,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "android": "tsc && vite build && cap run android",
+    "android": "tsc && vite build && cap copy && cap sync && cap run android",
     "preview": "vite preview",
     "test": "vitest",
     "update": "rm -rf node_modules && npm update"
@@ -33,19 +33,20 @@
     "@capacitor/status-bar": "^5",
     "@ionic/react": "^7",
     "@ionic/react-router": "^7",
+    "@ionic/storage": "latest",
     "break_eternity.js": "latest",
     "ionicons": "^7",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-router": "^5",
-    "react-router-dom": "^5"
+    "react": "latest",
+    "react-dom": "latest",
+    "react-router": "latest",
+    "react-router-dom": "latest"
   },
   "devDependencies": {
     "@capacitor/cli": "^5",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "@types/react-router": "^5",
-    "@types/react-router-dom": "^5",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/react-router": "latest",
+    "@types/react-router-dom": "latest",
     "@vitejs/plugin-legacy": "latest",
     "@vitejs/plugin-react": "latest",
     "typescript": "latest",
