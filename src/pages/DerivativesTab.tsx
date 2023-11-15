@@ -1,5 +1,6 @@
 import Decimal from "break_eternity.js";
 import { calculatorOutline } from "ionicons/icons";
+import React from "react";
 
 import { IonCol, IonGrid, IonRow } from "@ionic/react";
 
@@ -12,7 +13,15 @@ import Format from "../utils/format";
 const derivatives = [] as Resource[];
 
 export default function DerivativesTab() {
-  const [main, ...rest] = derivatives;
+  const rm = Game.useResourceManager();
+  const [main, ...rest] = React.useMemo(
+    () => derivatives.map((res) => rm.resolve(res)),
+    [rm],
+  );
+  if (!rm || !main || !rest.length) {
+    return null;
+  }
+
   return (
     <IonGrid>
       <RenderTitle resource={main} rest={rest} />
@@ -125,13 +134,12 @@ function genDerivatives(name = "x", cnt = 0) {
 }
 
 function RenderTitle(props: { resource: Resource; rest: Resource[] }) {
-  const rm = Game.useResourceManager();
-  const fmt = Format.resource(rm.resolve(props.resource));
+  const fmt = Format.resource(props.resource);
 
   return (
     <IonRow>
       <IonCol size="12" className="ion-text-center">
-        {fmt.icon && <Icon icon={fmt.icon} size="1em" />}
+        {fmt.icon && <Icon icon={fmt.icon} size="small" />}
         {fmt.name?.toUpperCase()}
         &nbsp;: &nbsp;
         {fmt.value}
@@ -197,7 +205,7 @@ function RenderDerivative(props: { resource: Resource }) {
     <>
       <div className="quarter">
         <div className="full">
-          {fmt.icon && <Icon icon={fmt.icon} size="1em" />}
+          {fmt.icon && <Icon icon={fmt.icon} size="small" />}
           {fmt.name}
         </div>
         {props.resource.extra.factor > 0 && (

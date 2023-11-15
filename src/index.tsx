@@ -18,9 +18,8 @@ import { gridOutline } from "ionicons/icons";
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { IonApp, setupIonicReact } from "@ionic/react";
+import { IonApp, IonLoading, setupIonicReact } from "@ionic/react";
 
-import ImageComposition from "./components/ImageComposition";
 import Game from "./model/Game";
 import RPG from "./model/RPG";
 import AnimeTab from "./pages/AnimeTab";
@@ -29,15 +28,22 @@ import TabApp from "./pages/TabApp";
 
 setupIonicReact();
 
+const div = document.createElement("div");
+div.id = "root";
+document.body.appendChild(div);
+const root = createRoot(div);
+
+root.render(
+  <IonLoading
+    isOpen={true}
+    message="Loading game assets..."
+    spinner="lines-sharp"
+  />,
+);
+
 window.addEventListener(
   "load",
   async () => {
-    const div = document.createElement("div");
-    div.id = "root";
-    document.body.appendChild(div);
-    const root = createRoot(div);
-
-    root.render(<ImageComposition />);
     await Game.Database.initialize();
     await RPG.loadItems("/items.json");
     AnimeTab.init();

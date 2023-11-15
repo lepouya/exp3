@@ -173,6 +173,18 @@ export default class Resource {
         (this as any)[k] = res[k];
       }
     }
+
+    // Fix things that should have been Decimal
+    if (this.count && !(this.count instanceof Decimal)) {
+      this.count = Decimal.fromValue(this.count);
+    }
+    if (this.rate.count && !(this.rate.count instanceof Decimal)) {
+      this.rate.count = Decimal.fromValue(this.rate.count);
+    }
+    if (this.rate.lastCount && !(this.rate.lastCount instanceof Decimal)) {
+      this.rate.lastCount = Decimal.fromValue(this.rate.lastCount);
+    }
+
     return this;
   }
 

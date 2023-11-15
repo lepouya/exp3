@@ -107,7 +107,9 @@ export default function ResourceRender({
   if ((showIcon && resource.icon) || (showName && res.name)) {
     output.push(
       <div className="name" key="name">
-        {showIcon && resource.icon && <Icon icon={resource.icon} size="1em" />}
+        {showIcon && resource.icon && (
+          <Icon icon={resource.icon} size="small" />
+        )}
         {showName && res.name}
         {(showValue || showRate) && (infix ?? ":")}
       </div>,
