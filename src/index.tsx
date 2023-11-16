@@ -14,7 +14,6 @@ import "@ionic/react/css/display.css";
 /* Theme variables */
 import "./theme.css";
 
-import { gridOutline } from "ionicons/icons";
 import React from "react";
 import { createRoot } from "react-dom/client";
 
@@ -23,7 +22,7 @@ import { IonApp, IonLoading, setupIonicReact } from "@ionic/react";
 import Game from "./model/Game";
 import RPG from "./model/RPG";
 import AnimeTab from "./pages/AnimeTab";
-import DerivativesTab from "./pages/DerivativesTab";
+import GridTab from "./pages/Grids";
 import TabApp from "./pages/TabApp";
 
 setupIonicReact();
@@ -47,21 +46,9 @@ window.addEventListener(
     await Game.Database.initialize();
     await RPG.loadItems("/items.json");
     AnimeTab.init();
-    DerivativesTab.init();
+    GridTab.init();
+    // DerivativesTab.init();
     await Game.ResourceManager.load();
-
-    // For fun
-    setTimeout(
-      () =>
-        Game.Tab.register({
-          path: "grids",
-          content: <div>Nothing yet</div>,
-          icon: gridOutline,
-          label: "grids",
-          title: "Grids test",
-        }),
-      5000,
-    );
 
     root.render(
       <React.StrictMode>

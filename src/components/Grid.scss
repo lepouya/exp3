@@ -1,0 +1,97 @@
+// Inspired by https://css-tricks.com/hexagons-and-beyond-flexible-responsive-grid-patterns-sans-media-queries/
+
+.grid {
+  --columns: auto;
+  --cell-size: 100px;
+  --cell-gap: 0px;
+
+  --interlaced: 1;
+  --aspect-ratio: 0.866;
+  --horizontal-bevel: 0.5;
+  --vertical-bevel: 0.25;
+
+  // Clip path
+  --hc: calc(clamp(0, var(--horizontal-bevel), 0.5) * var(--cell-size));
+  --vc: calc(
+    clamp(0, var(--vertical-bevel), 0.5) * var(--cell-size) *
+      var(--aspect-ratio)
+  );
+  --clip-path: polygon(
+    var(--hc) 0,
+    calc(100% - var(--hc)) 0,
+    100% var(--vc),
+    100% calc(100% - var(--vc)),
+    calc(100% - var(--hc)) 100%,
+    var(--hc) 100%,
+    0 calc(100% - var(--vc)),
+    0 var(--vc)
+  );
+
+  // Margins
+  --mv: var(--cell-gap);
+  --mh: calc(var(--cell-gap) + (var(--cell-size) - 2 * var(--hc)) / 2);
+
+  // Left side float
+  --lsf: calc(
+    2 * var(--cell-size) * var(--aspect-ratio) + 4 * var(--mv) - 2 * var(--vc) -
+      1px
+  );
+
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, calc(var(--cell-size) + 2 * var(--mh)))
+    calc(var(--cell-size) / 2 + var(--mh));
+  justify-content: center;
+
+  width: calc(
+    ((var(--columns) + 0.5) * (var(--cell-size) + 2 * var(--mh))) + 1px
+  );
+
+  > div,
+  .grid-body {
+    position: relative;
+    left: calc(-1 * var(--mh));
+    width: 100%;
+    padding-bottom: var(--vc);
+    grid-column: 1/-1;
+
+    // Disable white space between inline block element
+    font-size: 0;
+
+    > div,
+    .grid-cell {
+      display: inline-flex;
+      overflow: hidden;
+
+      width: var(--cell-size);
+      height: calc(var(--cell-size) * var(--aspect-ratio));
+      margin: var(--mv) var(--mh);
+      margin-bottom: calc(var(--mv) - var(--vc));
+
+      font-size: initial;
+      text-align: center;
+      vertical-align: middle;
+      align-items: center;
+      justify-content: center;
+
+      cursor: pointer;
+      user-select: none;
+      touch-action: pan-x;
+      pointer-events: none;
+
+      clip-path: var(--clip-path);
+    }
+
+    &::before {
+      content: "";
+      float: left;
+      width: calc(var(--cell-size) / 2 + var(--mh));
+      height: calc(100% + 1px);
+
+      shape-outside: repeating-linear-gradient(
+        transparent 0 calc(var(--lsf) - 1px),
+        rgba(transparent, var(--interlaced)) 0 var(--lsf)
+      );
+    }
+  }
+}
