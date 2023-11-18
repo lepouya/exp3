@@ -155,16 +155,16 @@ module Game {
     export const signalUpdate = resourceManagerRegistry.signal;
 
     export async function save() {
-      return await Database.write(
-        "ResourceManager",
-        resourceManagerRegistry.get().save(),
-      );
+      const rm = resourceManagerRegistry.get();
+      rm.tick(undefined, "save");
+      return await Database.write("ResourceManager", rm.save());
     }
 
     export async function load() {
-      return resourceManagerRegistry
-        .get()
-        .load(await Database.read("ResourceManager"));
+      const rm = resourceManagerRegistry.get();
+      rm.load(await Database.read("ResourceManager"));
+      rm.tick(undefined, "load");
+      return rm;
     }
   }
 
