@@ -459,7 +459,12 @@ module RPG {
       Player.registry[this.name] = this;
     }
 
-    static async load(props: string | Record<string, Partial<Player>>) {
+    static async load(
+      props:
+        | string
+        | Record<string, Partial<Player>>
+        | Record<string, Partial<Player>>[],
+    ) {
       if (typeof props === "string") {
         const res = await fetch(props);
         if (res.ok) {
@@ -468,6 +473,8 @@ module RPG {
         } else {
           console.error(res);
         }
+      } else if (Array.isArray(props)) {
+        await Promise.all(props.map((player) => Player.load(player)));
       } else {
         for (const name in props) {
           try {
