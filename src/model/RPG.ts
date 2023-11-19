@@ -419,6 +419,8 @@ module RPG {
 }
 
 module RPG {
+  export class PlayerException extends Error {}
+
   export class Player {
     static readonly registry: Record<string, Player> = {};
 
@@ -430,12 +432,14 @@ module RPG {
 
     specialBoosts: StatBoost[] = [];
 
-    constructor(props: Partial<Player> | string) {
+    constructor(props?: Partial<Player> | string) {
       if (typeof props === "string") {
         this.name = props;
-      } else {
+      } else if (typeof props === "object") {
         this.name = props.name || "";
         this.fill(props);
+      } else {
+        this.name = "";
       }
 
       if (!this.name) {
@@ -447,7 +451,9 @@ module RPG {
       }
 
       if (Player.registry[this.name]) {
-        throw new Error(`Player with name ${this.name} already exists`);
+        throw new PlayerException(
+          `Player with name ${this.name} already exists`,
+        );
       }
 
       Player.registry[this.name] = this;
@@ -487,10 +493,167 @@ module RPG {
       return this;
     }
 
-    // TODO: Add/Remove item
-    // TODO: Equip item
-    // TODO: Get character stats
-    // TODO: Get character image
+    addItem(item: PlayerItem) {
+      if (item.count === 0) {
+        return true;
+      }
+
+      const itemKey =
+        item.item +
+        ":" +
+        item.rank +
+        (item.uniqueId ? ":" + item.uniqueId : "");
+      if (!this.inventory[itemKey]) {
+        if (item.count < 0) {
+          throw new PlayerException("Insufficient number of items");
+        }
+        this.inventory[itemKey] = { ...item, count: 0 };
+      }
+
+      const curItem = this.inventory[itemKey];
+      if (curItem.count + item.count < 0) {
+        throw new PlayerException("Insufficient number of items");
+      } else if (curItem.count + item.count > 1 && curItem.uniqueId) {
+        throw new PlayerException(
+          "Cannot have more than one unique item of this type",
+        );
+      }
+
+      curItem.count += item.count;
+      if (curItem.count === 0) {
+        delete this.inventory[itemKey];
+      }
+      return true;
+    }
+
+    removeItem(item: PlayerItem) {
+      return this.addItem({ ...item, count: -item.count });
+    }
+
+    unequip(itemName?: string, fromCharacter?: string) {
+      const character = this.characters[fromCharacter || itemName || ""];
+      const item = RPG.itemByName[itemName || ""];
+      if (!character || !item) {
+        throw new PlayerException("Equipment not found");
+      }
+
+      if (item.type === "rank") {
+        throw new PlayerException("Cannot unequip rank");
+      } else if (item.type === "character") {
+        if (fromCharacter && fromCharacter !== item.name) {
+          throw new PlayerException(
+            "Cannot unequip character from another character",
+          );
+        }
+        if (!character.character || character.character.item !== item.name) {
+          throw new PlayerException("Character not found");
+        }
+        // Unequip all items this character is wearing
+        for (const type of RPG.ItemTypes) {
+          if (
+            type !== "rank" &&
+            type !== "character" &&
+            character[type] &&
+            !this.unequip(character[type]?.item, item.name)
+          ) {
+            throw new PlayerException(
+              "Failed to unequip all of the character's equipment",
+            );
+          }
+        }
+        // Return the character to the inventory
+        if (!this.addItem(character.character)) {
+          throw new PlayerException("Failed to return character to inventory");
+        }
+        delete this.characters[item.name];
+        return true;
+      }
+
+      const playerItem = character[item.type];
+      if (!playerItem || playerItem.item !== item.name) {
+        throw new PlayerException("Equipment not found");
+      }
+      if (!this.addItem(playerItem)) {
+        throw new PlayerException("Failed to return item to inventory");
+      }
+      delete character[item.type];
+
+      return true;
+    }
+
+    equip(equipment: PlayerItem, toCharacter?: string) {
+      const item = RPG.itemByName[equipment.item];
+      const rank = RPG.itemByName[equipment.rank];
+      if (!item || !rank) {
+        throw new PlayerException("Equipment not found");
+      }
+
+      if (item.type === "rank") {
+        throw new PlayerException("Cannot equip rank");
+      } else if (item.type === "character") {
+        if (toCharacter && toCharacter !== item.name) {
+          throw new PlayerException(
+            "Cannot equip character to another character",
+          );
+        }
+        if (this.characters[item.name]) {
+          throw new PlayerException("Character already equipped");
+        }
+        if (!this.removeItem(equipment)) {
+          throw new PlayerException(
+            "Failed to remove character from inventory",
+          );
+        }
+
+        this.characters[item.name] = { character: equipment };
+        return true;
+      }
+
+      const character = this.characters[toCharacter || item.name];
+      if (!character) {
+        throw new PlayerException("Character not found ");
+      }
+
+      if (
+        character[item.type] &&
+        !this.unequip(character[item.type]?.item, character.character?.item)
+      ) {
+        throw new PlayerException("Failed to unequip previous equipment");
+      }
+      if (!this.removeItem(equipment)) {
+        throw new PlayerException("Failed to remove item from inventory");
+      }
+      character[item.type] = equipment;
+      return true;
+    }
+
+    getStats(characterName?: string) {
+      const character = this.characters[characterName || ""];
+      if (!character) {
+        throw new PlayerException("Character not found");
+      }
+
+      // TODO: Probably something with player level here
+
+      return RPG.computeCharacterStats(character, this.specialBoosts);
+    }
+
+    getImage(
+      characterName?: string,
+      layer: keyof typeof RPG.ImageLayers = "main",
+      initOptions: Partial<ImageOptions> = {},
+    ): ImageOptions {
+      const character = this.characters[characterName || ""];
+      if (!character || !character.character) {
+        throw new PlayerException("Character not found");
+      }
+
+      let renderChar = character;
+      if (layer === "icon") {
+        renderChar = { character: character.character, rank: character.rank };
+      }
+      return RPG.getCharacterImage(renderChar, layer, initOptions);
+    }
   }
 }
 

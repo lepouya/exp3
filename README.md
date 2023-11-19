@@ -3,9 +3,9 @@
 - Finish porting the derivatives tab
 - App and Fav Icons
   - https://capacitorjs.com/docs/android/configuration
-- Grids
 - Options page
 - Turn image composition into an npm lib
+- subscriptions for player updates
 
 ## Things to experiment with
 

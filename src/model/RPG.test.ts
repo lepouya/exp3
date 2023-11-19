@@ -163,3 +163,214 @@ test("correct derivative stats with rank boosts", () => {
     EVA: 8.125,
   });
 });
+
+test("addItem should add items to the inventory", () => {
+  const player = new RPG.Player();
+  const item: RPG.PlayerItem = {
+    item: "w1",
+    rank: "r0",
+    count: 1,
+  };
+
+  player.addItem(item);
+
+  expect(player.inventory).to.deep.equal({
+    "w1:r0": {
+      item: "w1",
+      rank: "r0",
+      count: 1,
+    },
+  });
+});
+
+test("addItem should increase the count of existing items in the inventory", () => {
+  const player = new RPG.Player();
+  const item: RPG.PlayerItem = {
+    item: "w1",
+    rank: "r0",
+    count: 1,
+  };
+
+  player.addItem(item);
+  player.addItem({ ...item, count: 2 });
+
+  expect(player.inventory).to.deep.equal({
+    "w1:r0": {
+      item: "w1",
+      rank: "r0",
+      count: 3,
+    },
+  });
+});
+
+test("addItem should remove items from the inventory when count reaches zero", () => {
+  const player = new RPG.Player();
+  const item: RPG.PlayerItem = {
+    item: "w1",
+    rank: "r0",
+    count: 1,
+  };
+
+  player.addItem(item);
+  player.addItem(item);
+  player.addItem({ ...item, count: -2 });
+
+  expect(player.inventory).to.deep.equal({});
+});
+
+test("addItem should throw an error when count is negative and there are not enough items in the inventory", () => {
+  const player = new RPG.Player();
+  const item: RPG.PlayerItem = {
+    item: "w1",
+    rank: "r0",
+    count: 1,
+  };
+
+  expect(() => player.removeItem(item)).to.throw();
+});
+
+test("addItem should throw an error when count is positive and there is already a unique item of the same type in the inventory", () => {
+  const player = new RPG.Player();
+  const item: RPG.PlayerItem = {
+    item: "w1",
+    rank: "r0",
+    count: 1,
+    uniqueId: "12345",
+  };
+
+  player.addItem(item);
+
+  expect(() => player.addItem(item)).to.throw();
+});
+
+RPG.registerItem({
+  name: "c2",
+  type: "character",
+  stats: { STR: 10, DEX: 10, MAG: 10 },
+});
+
+function setupPlayer() {
+  const player = new RPG.Player();
+  const character: RPG.Character = {
+    character: { item: "c1", rank: "r0", count: 1 },
+    body: { item: "b1", rank: "r0", count: 1 },
+    weapon: { item: "w1", rank: "r0", count: 1 },
+  };
+  player.characters["c1"] = character;
+
+  player.addItem({ item: "c1", rank: "r0", count: 1 });
+  player.addItem({ item: "c2", rank: "r2", count: 1 });
+  player.addItem({ item: "b1", rank: "r0", count: 2 });
+  player.addItem({ item: "b1", rank: "r1", count: 2 });
+  return player;
+}
+
+test("equip should throw an error if equipment is not found", () => {
+  const player = setupPlayer();
+  const equipment: RPG.PlayerItem = {
+    item: "invalidItem",
+    rank: "r0",
+    count: 1,
+  };
+
+  expect(() => player.equip(equipment)).to.throw();
+});
+
+test("equip should throw an error if trying to equip a rank", () => {
+  const player = setupPlayer();
+  const equipment: RPG.PlayerItem = {
+    item: "r0",
+    rank: "r0",
+    count: 1,
+  };
+
+  expect(() => player.equip(equipment)).to.throw();
+});
+
+test("equip should throw an error if trying to equip character to another character", () => {
+  const player = setupPlayer();
+  const equipment: RPG.PlayerItem = {
+    item: "c2",
+    rank: "r0",
+    count: 1,
+  };
+
+  expect(() => player.equip(equipment, "c1")).to.throw();
+});
+
+test("equip should throw an error if character is already equipped", () => {
+  const player = setupPlayer();
+  const equipment: RPG.PlayerItem = {
+    item: "c2",
+    rank: "r2",
+    count: 1,
+  };
+
+  player.equip(equipment);
+
+  expect(() => player.equip(equipment)).to.throw();
+});
+
+test("equip should throw an error if failed to remove character from inventory", () => {
+  const player = setupPlayer();
+  const equipment: RPG.PlayerItem = {
+    item: "c1",
+    rank: "r0",
+    count: 1,
+  };
+
+  expect(() => player.equip(equipment)).to.throw();
+});
+
+test("equip should throw an error if character is not found", () => {
+  const player = setupPlayer();
+  const equipment: RPG.PlayerItem = {
+    item: "w1",
+    rank: "r0",
+    count: 1,
+  };
+
+  expect(() => player.equip(equipment)).to.throw();
+});
+
+test("equip should throw an error if failed to unequip previous equipment", () => {
+  const player = setupPlayer();
+  const equipment: RPG.PlayerItem = {
+    item: "w1",
+    rank: "r0",
+    count: 1,
+  };
+
+  expect(() => player.equip(equipment)).to.throw();
+});
+
+test("equip should throw an error if failed to remove item from inventory", () => {
+  const player = setupPlayer();
+  const equipment: RPG.PlayerItem = {
+    item: "w1",
+    rank: "r0",
+    count: 1,
+  };
+
+  expect(() => player.equip(equipment)).to.throw();
+});
+
+test("equip should equip the item successfully", () => {
+  const player = setupPlayer();
+  expect(player.equip({ item: "c2", rank: "r2", count: 1 })).to.be.true;
+  expect(player.characters["c2"]).to.deep.equal({
+    character: { item: "c2", rank: "r2", count: 1 },
+  });
+
+  expect(player.equip({ item: "b1", rank: "r1", count: 1 }, "c2")).to.be.true;
+  expect(player.characters["c2"].body).to.deep.equal({
+    item: "b1",
+    rank: "r1",
+    count: 1,
+  });
+  expect(player.characters["c2"].weapon).to.be.undefined;
+  expect(player.removeItem({ item: "b1", rank: "r1", count: 1 })).to.be.true;
+  expect(() =>
+    player.removeItem({ item: "b1", rank: "r1", count: 1 }),
+  ).to.throw();
+});
