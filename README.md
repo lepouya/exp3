@@ -6,6 +6,7 @@
 - Turn image composition into an npm lib
 - subscriptions for player updates
 - Fix Grids on Android
+- Inline the selections for anime tab
 
 ## Things to experiment with
 

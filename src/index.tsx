@@ -24,6 +24,7 @@ import RPG from "./model/RPG";
 import AnimeTab from "./pages/AnimeTab";
 import DerivativesTab from "./pages/DerivativesTab";
 import GridTab from "./pages/Grids";
+import SettingsTab from "./pages/SettingsTab";
 import TabApp from "./pages/TabApp";
 
 setupIonicReact();
@@ -49,6 +50,7 @@ window.addEventListener(
     AnimeTab.init();
     DerivativesTab.init();
     GridTab.init();
+    SettingsTab.init();
     await Game.ResourceManager.load();
 
     root.render(
