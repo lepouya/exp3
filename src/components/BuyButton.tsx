@@ -109,7 +109,7 @@ export default function BuyButton({
             color={chipColor[res.valueSign ?? "zero"]}
             style={{ textTransform: "none" }}
           >
-            {res.value?.replaceAll(/[+-]/g, "")}{" "}
+            {res.value?.replace(/[+-]/g, "")}{" "}
             {res.icon && <Icon icon={res.icon} size="small" />}
             {res.name}
           </IonChip>
@@ -184,7 +184,8 @@ BuyButton.BuyAmountButtons = () => {
             fill={value === rm.globalBuyAmount ? "solid" : "outline"}
             onClick={() => (rm.globalBuyAmount = value)}
             id={`button-${value.replace(/\W/g, "")}`}
-            style={{ height: "3em" }}
+            style={{ height: "2.5em", width: "4em" }}
+            size="small"
           >
             {buyIcons[value[0]] && (
               <Icon icon={buyIcons[value[0]]} size="small" />

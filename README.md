@@ -5,6 +5,7 @@
 - Options page
 - Turn image composition into an npm lib
 - subscriptions for player updates
+- Fix Grids on Android
 
 ## Things to experiment with
 
