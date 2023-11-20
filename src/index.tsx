@@ -22,6 +22,7 @@ import { IonApp, IonLoading, setupIonicReact } from "@ionic/react";
 import Game from "./model/Game";
 import RPG from "./model/RPG";
 import AnimeTab from "./pages/AnimeTab";
+import DerivativesTab from "./pages/DerivativesTab";
 import GridTab from "./pages/Grids";
 import TabApp from "./pages/TabApp";
 
@@ -46,8 +47,8 @@ window.addEventListener(
     await Game.Database.initialize();
     await RPG.loadItems("/items.json");
     AnimeTab.init();
+    DerivativesTab.init();
     GridTab.init();
-    // DerivativesTab.init();
     await Game.ResourceManager.load();
 
     root.render(

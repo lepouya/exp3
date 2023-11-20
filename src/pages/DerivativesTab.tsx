@@ -1,8 +1,16 @@
-import Decimal from "break_eternity.js";
 import { calculatorOutline } from "ionicons/icons";
-import React from "react";
 
-import { IonCol, IonGrid, IonRow } from "@ionic/react";
+import {
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardSubtitle,
+  IonCardTitle,
+  IonCol,
+  IonGrid,
+  IonRow,
+  IonText,
+} from "@ionic/react";
 
 import BuyButton from "../components/BuyButton";
 import Icon from "../components/Icon";
@@ -10,39 +18,26 @@ import Game from "../model/Game";
 import Resource, { ResourceManager } from "../model/Resource";
 import Format from "../utils/format";
 
-const derivatives = [] as Resource[];
-
 export default function DerivativesTab() {
   const rm = Game.useResourceManager();
-  const [main, ...rest] = React.useMemo(
-    () => derivatives.map((res) => rm.resolve(res)),
-    [rm],
-  );
+  const [main, ...rest] = [...Array(11)].map((_, i) => rm.resolve(`x_${i}`));
   if (!rm || !main || !rest.length) {
     return null;
   }
 
   return (
     <IonGrid>
+      {rest[0].count > 10 && rest[1].count > 1 && <RenderBuyMulti />}
       <RenderTitle resource={main} rest={rest} />
-      {rest[0].count.gt(0) && <RenderHeader />}
       {rest.map((res) => (
         <RenderDerivative key={res.name} resource={res} />
       ))}
-      {rest[0].count.gte(10) && (
-        <IonRow>
-          <IonCol size="12" className="ion-text-right">
-            Buy multiples: &nbsp;
-            <BuyButton.BuyAmountButtons />
-          </IonCol>
-        </IonRow>
-      )}
     </IonGrid>
   );
 }
 
 DerivativesTab.init = () => {
-  derivatives.push(...genDerivatives("x", 10));
+  genDerivatives("x", 10);
   Game.ShortCut.register("x", buyAllDerivatives);
   Game.Tab.register({
     path: "derivatives",
@@ -68,7 +63,7 @@ function genDerivatives(name = "x", cnt = 0) {
         singularName: d ? `d${dSuper}/dt${dSuper} . ${name}` : name,
         priority: d,
 
-        count: Decimal.dZero,
+        count: 0,
         extra: { base: 0 },
         value(this: Resource) {
           return this.count;
@@ -78,7 +73,7 @@ function genDerivatives(name = "x", cnt = 0) {
         autoUnlock: true,
         unlockCost() {
           return [
-            { resource: `${name}_${0}`, count: Decimal.pow10(d - 0.3) },
+            { resource: `${name}_${0}`, count: 10 ** (d - 0.3) },
             { resource: `${name}_${d - 1}`, count: 1 },
           ];
         },
@@ -90,29 +85,22 @@ function genDerivatives(name = "x", cnt = 0) {
           return [
             {
               resource: `${name}_${0}`,
-              count: Decimal.sub(n, 1)
-                .div(10)
-                .add(1)
-                .floor()
-                .mul(Math.floor(d ** 1.5) + 1)
-                .sub(1)
-                .floor()
-                .pow10(),
+              count:
+                10 **
+                Math.floor(
+                  Math.floor((n - 1) / 10 + 1) * (Math.floor(d ** 1.5) + 1) - 1,
+                ),
             },
           ];
         },
 
         onPurchase(this: Resource, purchase) {
           if (purchase.style !== "free") {
-            this.extra.base =
-              (this.extra.base ?? 0) +
-              Decimal.fromValue(purchase.count).toNumber();
+            this.extra.base = (this.extra.base ?? 0) + purchase.count;
             if (d > 0) {
-              this.extra.factor = Decimal.div(this.extra.base, 10)
-                .floor()
-                .pow_base(Decimal.dTwo)
-                .round()
-                .toNumber();
+              this.extra.factor = Math.round(
+                2 ** Math.floor(this.extra.base / 10),
+              );
             }
           }
         },
@@ -121,9 +109,7 @@ function genDerivatives(name = "x", cnt = 0) {
           if (d > 0) {
             this.manager
               .resolve(`${name}_${d - 1}`)
-              .add(
-                this.count.multiply(this.extra.factor ?? 0).multiply(0.1 * dt),
-              );
+              .add(this.count * (this.extra.factor ?? 0) * (0.1 * dt));
           }
         },
       }),
@@ -137,57 +123,58 @@ function RenderTitle(props: { resource: Resource; rest: Resource[] }) {
   const fmt = Format.resource(props.resource);
 
   return (
-    <IonRow>
-      <IonCol size="12" className="ion-text-center">
-        {fmt.icon && <Icon icon={fmt.icon} size="small" />}
-        {fmt.name?.toUpperCase()}
-        &nbsp;: &nbsp;
-        {fmt.value}
-      </IonCol>
-      <IonCol size="3">
-        <BuyButton
-          resource={props.resource}
-          overrideBuyAmount="+1"
-          prefix="Add"
-        />
-      </IonCol>
-      <IonCol size="6" className="ion-text-center">
-        {fmt.rateSign !== "zero" && (
-          <div className={fmt.rateSign}>{`(${fmt.rate})`}</div>
-        )}
-      </IonCol>
-      <IonCol size="3">
-        {props.rest[0].count.gt(10) && (
-          <BuyButton.BuyAllButton
-            resources={props.rest}
-            showNames={false}
-            overrideCount="base"
-            all={`all ${fmt.name}'s`}
-          />
-        )}
-      </IonCol>
-      <hr className="underlined" />
-    </IonRow>
-  );
-}
-
-function RenderHeader() {
-  return (
-    <>
-      <div className="quarter">
-        <div className="full">Derivative</div>
-        <div className="zero three-quarters right">Boost Multi</div>
-      </div>
-      <div className="quarter">
-        <div className="full">Value</div>
-        <div className="zero three-quarters right">(# Bought)</div>
-      </div>
-      <div className="quarter">
-        <div className="positive">(Gain Rate)</div>
-      </div>
-      <div className="quarter right"></div>
-      <hr className="dotted" />
-    </>
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>
+          <IonRow>
+            <IonCol size="6" className="ion-text-right">
+              {fmt.icon && <Icon icon={fmt.icon} size="small" />}
+              {fmt.name}
+              {": "}
+            </IonCol>
+            <IonCol size="6" className="ion-text-left">
+              {fmt.value ?? ""}
+            </IonCol>
+          </IonRow>
+        </IonCardTitle>
+        <IonCardSubtitle>
+          <IonRow>
+            <IonCol size="6" className="ion-text-right">
+              {" "}
+            </IonCol>
+            {fmt.rate && (
+              <IonCol size="6" className="ion-text-left">
+                <IonText color={rateColor[fmt.rateSign ?? "zero"]}>
+                  {`(${fmt.rate})`}
+                </IonText>
+              </IonCol>
+            )}
+          </IonRow>
+        </IonCardSubtitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <IonCol size="12" className="ion-text-center">
+          {props.rest[0].count > 10 && props.rest[1].count > 1 ? (
+            <BuyButton.BuyAllButton
+              resources={props.rest}
+              showNames={false}
+              overrideCount="base"
+              all={`all ${fmt.name}'s`}
+              fill="outline"
+              style={{ width: "100%" }}
+            />
+          ) : (
+            <BuyButton
+              resource={props.resource}
+              overrideBuyAmount="+1"
+              prefix="Add"
+              fill="outline"
+              style={{ width: "100%" }}
+            />
+          )}
+        </IonCol>
+      </IonCardContent>
+    </IonCard>
   );
 }
 
@@ -202,40 +189,88 @@ function RenderDerivative(props: { resource: Resource }) {
   }
 
   return (
-    <>
-      <div className="quarter">
-        <div className="full">
-          {fmt.icon && <Icon icon={fmt.icon} size="small" />}
-          {fmt.name}
-        </div>
-        {props.resource.extra.factor > 0 && (
-          <div className="zero three-quarters right">
-            {`x${fmt.extras["Factor"]}`}
-          </div>
-        )}
-      </div>
-      <div className="quarter">
-        <div className="full">{fmt.value}</div>
-        {props.resource.extra.base > 0 && (
-          <div className="zero three-quarters right">
-            {`(${fmt.extras["Base"]})`}
-          </div>
-        )}
-      </div>
-      <div className="quarter">
-        {fmt.rateSign !== "zero" && (
-          <div className={fmt.rateSign}>{`(${fmt.rate})`}</div>
-        )}
-      </div>
-      <div className="quarter">
-        <BuyButton resource={props.resource} overrideCount="base" />
-      </div>
-      <hr className="dotted" />
-    </>
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>
+          <IonRow>
+            <IonCol size="6" className="ion-text-right">
+              {fmt.icon && <Icon icon={fmt.icon} size="small" />}
+              {fmt.name}
+              {": "}
+            </IonCol>
+            <IonCol size="6" className="ion-text-left">
+              {fmt.value ?? ""}
+            </IonCol>
+          </IonRow>
+        </IonCardTitle>
+        <IonCardSubtitle>
+          <IonRow>
+            {fmt.rate && (
+              <>
+                <IonCol size="6" className="ion-text-right">
+                  {" "}
+                </IonCol>
+                <IonCol size="6" className="ion-text-left">
+                  <IonText color={rateColor[fmt.rateSign ?? "zero"]}>
+                    {`(${fmt.rate})`}
+                  </IonText>
+                </IonCol>
+              </>
+            )}
+            <IonCol size="6" className="ion-text-left">
+              {fmt.extras["Factor"] &&
+                `Boost factor: x${fmt.extras["Factor"] ?? 0}`}
+            </IonCol>
+            <IonCol size="6" className="ion-text-right">
+              {props.resource.extra.base > 0 &&
+                `Manual buys: x${fmt.extras["Base"] ?? 0}`}
+            </IonCol>
+          </IonRow>
+        </IonCardSubtitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <IonRow>
+          <IonCol size="12" className="ion-text-center">
+            <BuyButton
+              resource={props.resource}
+              overrideCount="base"
+              fill="outline"
+              style={{ width: "100%" }}
+            />
+          </IonCol>
+        </IonRow>
+      </IonCardContent>
+    </IonCard>
+  );
+}
+
+function RenderBuyMulti() {
+  return (
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>
+          <IonRow>
+            <IonCol size="12" className="ion-text-center">
+              Buy multiples
+            </IonCol>
+          </IonRow>
+        </IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <IonRow>
+          <IonCol size="12" className="ion-text-center">
+            <BuyButton.BuyAmountButtons />
+          </IonCol>
+        </IonRow>
+      </IonCardContent>
+    </IonCard>
   );
 }
 
 function buyAllDerivatives() {
+  const derivatives = [...Array(11)].map((_, i) =>
+    ResourceManager.get(`x_${i}`),
+  );
   const ress = Object.fromEntries(
     derivatives.slice(1).map((r) => [r.name, "base"]),
   );
@@ -247,3 +282,9 @@ function buyAllDerivatives() {
   ResourceManager.purchaseAll(ress, 10);
   return true;
 }
+
+const rateColor = {
+  negative: "danger",
+  zero: "medium",
+  positive: "success",
+};

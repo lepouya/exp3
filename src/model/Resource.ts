@@ -1,5 +1,3 @@
-import Decimal, { DecimalSource } from "break_eternity.js";
-
 /**
  * The type of display for a resource.
  */
@@ -14,7 +12,7 @@ export type ResourceCount<
   Option = Resolved extends "resolved" ? never : string,
 > = {
   resource: Resource | Option;
-  count: DecimalSource;
+  count: number;
 };
 
 /**
@@ -29,7 +27,7 @@ export type PurchaseStyle = "full" | "partial" | "free";
  * given amount, starting at the minimum amount and ending at the maximum amount.
  */
 export type PurchaseAmount =
-  | DecimalSource
+  | number
   | {
       minAmount: number;
       maxAmount: number;
@@ -40,7 +38,7 @@ export type PurchaseAmount =
  * Represents the cost of purchasing a resource.
  */
 export type PurchaseCost = {
-  count: DecimalSource;
+  count: number;
   style: PurchaseStyle;
   gain: ResourceCount<"resolved">[];
   cost: ResourceCount<"resolved">[];
@@ -74,11 +72,11 @@ export default class Resource {
   description?: string;
 
   /// The current count of the resource. The main reason why we need resource management.
-  count: Decimal = Decimal.dZero;
+  count: number = 0;
   /// The maximum count the resource can take.
-  maxCount?: DecimalSource;
+  maxCount?: number;
   /// The minimum count the resource can take.
-  minCount?: DecimalSource;
+  minCount?: number;
 
   /// Extra data for the resource. Can be used for tick updates or rendering.
   extra: Record<string, any> = {};
@@ -89,11 +87,11 @@ export default class Resource {
   autoAward?: boolean;
 
   /// Customized value return for the resource. In most cases the default is fine.
-  value: () => Decimal = () =>
-    Decimal.clamp(this.count, this.minCount ?? 0, this.maxCount ?? Infinity);
+  value: () => number = () =>
+    clamp(this.count, this.minCount ?? 0, this.maxCount ?? Infinity);
   /// Customized cost function for the resource. Returns the resource costs for
   /// purchasing the n'th count of the resource. Not cumulative.
-  cost: (n: DecimalSource) => ResourceCount[] = () => [];
+  cost: (n: number) => ResourceCount[] = () => [];
   /// Customized unlock cost function for the resource. Returns the resource
   /// costs for unlocking the resource. If not unlocked already.
   unlockCost?: () => ResourceCount[];
@@ -108,17 +106,17 @@ export default class Resource {
 
   /// Customized gain factor for the resource. Used when calculating the gain
   /// from a purchase.
-  gainFactor?: (m: DecimalSource) => DecimalSource;
+  gainFactor?: (m: number) => number;
   /// Customized cost factor for the resource. Used when calculating the cost
   /// for a purchase.
-  costFactor?: (m: DecimalSource) => DecimalSource;
+  costFactor?: (m: number) => number;
 
   /// Callback for when the resource is purchased. The purchase cost is passed
   /// in as an argument.
   onPurchase?: (purchase: PurchaseCost) => void;
   /// Callback for when the resource is changed. The new count and the source
   /// of the change is passed in as arguments.
-  onChange?: (count: DecimalSource, source: string) => any;
+  onChange?: (count: number, source: string) => any;
 
   /// The last execution status of the resource.
   execution: {
@@ -129,16 +127,16 @@ export default class Resource {
 
   /// The last rate update of the resource.
   rate: {
-    count: Decimal;
+    count: number;
     ticks: number;
 
     lastCountUpdate?: number;
-    lastCount?: Decimal;
+    lastCount?: number;
 
     lastTickUpdate?: number;
     deltaTicks?: number;
 
-    pastCounts: Decimal[];
+    pastCounts: number[];
     pastTicks: number[];
   };
 
@@ -151,7 +149,7 @@ export default class Resource {
     }
 
     this.rate = {
-      count: Decimal.dZero,
+      count: 0,
       ticks: 0,
       pastCounts: [],
       pastTicks: [],
@@ -165,24 +163,9 @@ export default class Resource {
     for (k in res) {
       if (k === "extra" || k === "rate" || k === "execution") {
         Object.assign(this[k], res[k]);
-      } else if (k === "count" || k === "maxCount" || k === "minCount") {
-        if (res[k] != undefined) {
-          this[k] = Decimal.fromValue(res[k]!);
-        }
       } else if (k !== "manager" && k !== "name" && res[k] != undefined) {
         (this as any)[k] = res[k];
       }
-    }
-
-    // Fix things that should have been Decimal
-    if (this.count && !(this.count instanceof Decimal)) {
-      this.count = Decimal.fromValue(this.count);
-    }
-    if (this.rate.count && !(this.rate.count instanceof Decimal)) {
-      this.rate.count = Decimal.fromValue(this.rate.count);
-    }
-    if (this.rate.lastCount && !(this.rate.lastCount instanceof Decimal)) {
-      this.rate.lastCount = Decimal.fromValue(this.rate.lastCount);
     }
 
     return this;
@@ -192,9 +175,9 @@ export default class Resource {
     amount: PurchaseAmount = 1,
     style: PurchaseStyle = "partial",
     dry: boolean = false,
-    gainFactor: DecimalSource = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    gainFactor: number = 1,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ): PurchaseCost {
     return this.purchase(
       amount,
@@ -210,13 +193,13 @@ export default class Resource {
     amount: PurchaseAmount = 1,
     style: PurchaseStyle = "full",
     dry: boolean = false,
-    gainFactor: DecimalSource = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    gainFactor: number = 1,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ) {
     return this.purchase(
-      typeof amount !== "object" || amount instanceof Decimal
-        ? Decimal.neg(amount)
+      typeof amount !== "object"
+        ? -amount
         : {
             maxAmount: -amount.maxAmount,
             minAmount: -amount.minAmount,
@@ -230,14 +213,14 @@ export default class Resource {
     );
   }
 
-  add(amount: PurchaseAmount = 1, gainFactor: DecimalSource = 1): PurchaseCost {
+  add(amount: PurchaseAmount = 1, gainFactor: number = 1): PurchaseCost {
     return this.purchase(amount, "free", false, gainFactor, 0);
   }
 
   canBuy(
     amount: PurchaseAmount = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ): PurchaseCost {
     return this.purchase(amount, "partial", true, 1, costFactor, countOverride);
   }
@@ -248,56 +231,67 @@ export default class Resource {
         .filter(({ resource }) => this.name === resource.name)
         .map(({ count }) => {
           const prev = this.count;
-          this.count = Decimal.add(this.count, count).clamp(
+          this.count = clamp(
+            this.count + count,
             this.minCount ?? 0,
             this.maxCount ?? Infinity,
           );
-          return [{ resource: this, count: this.count.minus(prev) }];
+          return [{ resource: this, count: this.count - prev }];
         })
         .flat(),
     );
   }
 
-  getCount(override?: DecimalSource): Decimal {
+  getCount(override?: number | string): number {
     let count = override ?? this.count;
     if (typeof override === "string" && this.extra[override] != null) {
       count = this.extra[override];
     }
-    return Decimal.fromValue_noAlloc(count);
+    if (typeof count === "string") {
+      try {
+        return parseFloat(count);
+      } catch (e) {
+        return this.count;
+      }
+    } else {
+      return count;
+    }
   }
 
   getPurchaseCost(
-    amount: DecimalSource = 1,
+    amount: number = 1,
     style: PurchaseStyle = "full",
     dry: boolean = false,
-    gainFactor: DecimalSource = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    gainFactor: number = 1,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ): PurchaseCost {
-    if (Decimal.eq(amount, 0)) {
+    if (amount === 0) {
       return { count: 0, style, gain: [], cost: [] };
     }
 
     let start = this.getCount(countOverride);
-    let target = start
-      .plus(amount)
-      .clamp(this.minCount ?? 0, this.maxCount ?? Infinity);
+    let target = clamp(
+      start + amount,
+      this.minCount ?? 0,
+      this.maxCount ?? Infinity,
+    );
 
     if (style === "free") {
-      const diff = target.minus(start);
+      const diff = target - start;
       return {
         count: diff,
         style,
-        gain: [{ resource: this, count: diff.mul(gainFactor) }],
+        gain: [{ resource: this, count: diff * gainFactor }],
         cost: [],
       };
     }
 
-    if (start.gt(target)) {
+    if (start > target) {
       [start, target] = [target, start];
       [gainFactor, costFactor] = [
-        Decimal.neg(gainFactor),
-        Decimal.neg(costFactor).mul(this.manager.globalSellRatio ?? 1),
+        -gainFactor,
+        -costFactor * (this.manager.globalSellRatio ?? 1),
       ];
     }
 
@@ -306,8 +300,8 @@ export default class Resource {
       cost = this.manager.resolveAll(this.unlockCost());
     }
 
-    const s = start.floor().toNumber(),
-      t = target.floor().toNumber();
+    const s = Math.floor(start),
+      t = Math.floor(target);
     if (!isFinite(s) || !isFinite(t) || Math.abs(t - s) > 1000) {
       return { count: 0, style, gain: [], cost: [] };
     }
@@ -315,7 +309,7 @@ export default class Resource {
     let partialCount = 0;
     for (let i = s; i < t; i++) {
       const curCost = this.manager.resolveAll(this.cost(i + 1));
-      curCost.forEach((rc) => (rc.count = Decimal.mul(rc.count, costFactor)));
+      curCost.forEach((rc) => (rc.count = rc.count * costFactor));
       const partialCost = this.manager.combineAll([...cost, ...curCost]);
 
       if (style === "partial" && !this.manager.canAfford(partialCost)) {
@@ -333,11 +327,9 @@ export default class Resource {
       return { count: 0, style, gain: [], cost: [] };
     } else {
       return {
-        count: partialCount * Decimal.sign(gainFactor),
+        count: partialCount * Math.sign(gainFactor),
         style,
-        gain: [
-          { resource: this, count: Decimal.mul(gainFactor, partialCount) },
-        ],
+        gain: [{ resource: this, count: gainFactor * partialCount }],
         cost,
       };
     }
@@ -347,11 +339,11 @@ export default class Resource {
     amount: PurchaseAmount,
     style: PurchaseStyle = "partial",
     dry: boolean = false,
-    gainFactor: DecimalSource = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    gainFactor: number = 1,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ): PurchaseCost {
-    if (typeof amount !== "object" || amount instanceof Decimal) {
+    if (typeof amount === "number") {
       return this.manager.purchase(
         [{ resource: this, count: amount }],
         style,
@@ -362,7 +354,7 @@ export default class Resource {
       );
     }
 
-    const current = this.getCount(countOverride).toNumber();
+    const current = this.getCount(countOverride);
     if (
       !isFinite(current) ||
       Math.abs(amount.minAmount) > Math.abs(amount.maxAmount) ||
@@ -376,14 +368,13 @@ export default class Resource {
       maxCount = this.maxCount ?? Infinity,
       increment = amount.increments;
     function adjust(c: number) {
-      return Decimal.minus(
-        Decimal.clamp(
+      return (
+        clamp(
           Math.floor((current + c) / increment) * increment,
           minCount,
           maxCount,
-        ),
-        current,
-      ).toNumber();
+        ) - current
+      );
     }
 
     // Try to buy max amount allowed
@@ -395,7 +386,7 @@ export default class Resource {
       costFactor,
       countOverride,
     );
-    let pCount = (toBuy.count as Decimal).toNumber();
+    let pCount = toBuy.count;
 
     // Something partial came back, so adjust it to increments
     if (pCount % increment !== 0) {
@@ -407,7 +398,7 @@ export default class Resource {
         costFactor,
         countOverride,
       );
-      pCount = (toBuy.count as Decimal).toNumber();
+      pCount = toBuy.count;
     }
 
     // Can't afford anything
@@ -421,11 +412,11 @@ export default class Resource {
       }
 
       const adjusted = adjust(
-        Decimal.clamp(
+        clamp(
           increment,
           Math.min(amount.minAmount, amount.maxAmount),
           Math.max(amount.minAmount, amount.maxAmount),
-        ).toNumber(),
+        ),
       );
       toBuy = this.manager.purchase(
         [
@@ -440,7 +431,7 @@ export default class Resource {
         costFactor,
         countOverride,
       );
-      pCount = (toBuy.count as Decimal).toNumber();
+      pCount = toBuy.count;
     }
 
     if (dry) {
@@ -472,22 +463,22 @@ export default class Resource {
   } = {}): this {
     this.tick = function (dt: number, src?: string) {
       if (!tickSource || src === tickSource) {
-        let cur =
-          (kind && this.extra ? this.extra[kind] : this.count?.toNumber()) ?? 0;
+        let cur = (kind && this.extra ? this.extra[kind] : this.count) ?? 0;
         if (
           (cur > minValue || direction > 0) &&
           (cur < maxValue || direction < 0)
         ) {
-          cur = Math.min(Math.max(cur + direction * dt, minValue), maxValue);
+          cur = clamp(cur + direction * dt, minValue, maxValue);
           if (kind && this.extra) {
             this.extra[kind] = cur;
           } else {
-            this.count = Decimal.fromNumber(cur);
+            this.count = cur;
           }
 
           if (streakKind && this.extra && this.extra[streakKind] != null) {
-            this.extra[streakKind] = Math.min(
-              Math.max(this.extra[streakKind] + direction * dt, minValue),
+            this.extra[streakKind] = clamp(
+              this.extra[streakKind] + direction * dt,
+              minValue,
               maxValue,
             );
 
@@ -538,7 +529,7 @@ export class ResourceManager {
   lastRender: number = 0;
   lastTick?: number;
 
-  rateUpdateSecs = 0.1;
+  rateUpdateSecs = 1;
   rateHistoryWindow = 10;
   minResourceUpdateSecs = 0.001;
   maxResourceUpdateSecs = 24 * 60 * 60;
@@ -546,14 +537,14 @@ export class ResourceManager {
 
   globalTimeDilation = 1.0;
   globalNumberFormat?: string;
-  globalSellRatio: DecimalSource = 1;
+  globalSellRatio: number = 1;
   globalBuyAmount: string = "+1";
 
-  gainFactor?: (m: DecimalSource) => DecimalSource;
-  costFactor?: (m: DecimalSource) => DecimalSource;
+  gainFactor?: (m: number) => number;
+  costFactor?: (m: number) => number;
 
   onTickComplete?: (
-    changes: Record<string, Decimal>,
+    changes: Record<string, number>,
     dt: number,
     source: string,
   ) => any;
@@ -564,7 +555,7 @@ export class ResourceManager {
       lastTick: number;
       lastDelta: number;
       lastResult: any[];
-      lastChanges: Record<string, Decimal>;
+      lastChanges: Record<string, number>;
     }
   > = {};
 
@@ -607,9 +598,9 @@ export class ResourceManager {
     toBuy: ResourceCount[],
     style: PurchaseStyle = "partial",
     dry: boolean = false,
-    gainFactor: DecimalSource = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    gainFactor: number = 1,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ) {
     return ResourceManager.singleton.purchase(
       toBuy,
@@ -622,13 +613,13 @@ export class ResourceManager {
   }
 
   static purchaseAll(
-    resources: Record<string, DecimalSource | undefined>,
+    resources: Record<string, number | string | undefined>,
     amount: PurchaseAmount,
     style: PurchaseStyle = "partial",
     dry: boolean = false,
-    gainFactor: DecimalSource = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    gainFactor: number = 1,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ) {
     return ResourceManager.singleton.purchaseAll(
       resources,
@@ -711,25 +702,23 @@ export class ResourceManager {
         resource: this.resolve(resource),
         count,
       }))
-      .filter(({ resource, count }) => resource && Decimal.neq(count, 0));
+      .filter(({ resource, count }) => resource && count !== 0);
   }
 
   combineAll(rcs: ResourceCount<"resolved">[]): ResourceCount<"resolved">[] {
     const res: Record<string, ResourceCount<"resolved">> = {};
     rcs.forEach(({ resource, count }) => {
       res[resource.name] ??= { resource, count: 0 };
-      res[resource.name].count = Decimal.add(res[resource.name].count, count);
+      res[resource.name].count += count;
     });
-    return Object.values(res).filter(({ count }) => Decimal.neq(count, 0));
+    return Object.values(res).filter(({ count }) => count !== 0);
   }
 
   canAfford(cost: ResourceCount<"resolved">[], toSpend = true): boolean {
     return this.combineAll(cost).every(
       ({ resource, count }) =>
         (resource.unlocked ?? true) &&
-        Decimal.sub(resource.count, count).gte(
-          toSpend ? resource.minCount ?? 0 : 0,
-        ),
+        resource.count - count >= (toSpend ? resource.minCount ?? 0 : 0),
     );
   }
 
@@ -737,9 +726,9 @@ export class ResourceManager {
     toBuy: ResourceCount[],
     style: PurchaseStyle = "partial",
     dry: boolean = false,
-    gainFactor: DecimalSource = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    gainFactor: number = 1,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ): PurchaseCost {
     gainFactor = this.gainFactor ? this.gainFactor(gainFactor) : gainFactor;
     costFactor = this.costFactor ? this.costFactor(costFactor) : costFactor;
@@ -754,7 +743,7 @@ export class ResourceManager {
         countOverride,
       );
 
-      if (dry || Decimal.eq(rcCost.count, 0)) {
+      if (dry || rcCost.count === 0) {
         return rcCost;
       } else {
         if (!(resource.unlocked ?? true)) {
@@ -768,7 +757,7 @@ export class ResourceManager {
         const gain = resource.apply(rcCost.gain);
         const cost = rcCost.cost
           .map(({ resource, count }) =>
-            resource.apply([{ resource, count: Decimal.neg(count) }]),
+            resource.apply([{ resource, count: -count }]),
           )
           .flat();
 
@@ -781,7 +770,7 @@ export class ResourceManager {
     });
 
     return {
-      count: costs.reduce((count, rc) => count.plus(rc.count), Decimal.dZero),
+      count: costs.reduce((count, rc) => count + rc.count, 0),
       style,
       gain: this.combineAll(costs.map((rcCost) => rcCost.gain).flat()),
       cost: this.combineAll(costs.map((rcCost) => rcCost.cost).flat()),
@@ -789,13 +778,13 @@ export class ResourceManager {
   }
 
   purchaseAll(
-    resources: Record<string, DecimalSource | undefined>,
+    resources: Record<string, number | string | undefined>,
     amount: PurchaseAmount,
     style: PurchaseStyle = "partial",
     dry: boolean = false,
-    gainFactor: DecimalSource = 1,
-    costFactor: DecimalSource = 1,
-    countOverride?: DecimalSource,
+    gainFactor: number = 1,
+    costFactor: number = 1,
+    countOverride?: number | string,
   ): PurchaseCost {
     let toBuy = Object.values(ResourceManager.singleton.resources).filter(
       (res) => (res.unlocked ?? true) && !res.disabled,
@@ -817,7 +806,7 @@ export class ResourceManager {
     });
 
     return {
-      count: costs.reduce((count, rc) => count.plus(rc.count), Decimal.dZero),
+      count: costs.reduce((count, rc) => count + rc.count, 0),
       style,
       gain: this.combineAll(costs.map((rcCost) => rcCost.gain).flat()),
       cost: this.combineAll(costs.map((rcCost) => rcCost.cost).flat()),
@@ -831,8 +820,9 @@ export class ResourceManager {
     onRender?: (rm?: this) => void,
   ): any[] {
     // Figure out how long it's been since last tick
-    let dt = Math.min(
-      Math.max((now - (this.lastTick ?? now)) / 1000, 0),
+    let dt = clamp(
+      (now - (this.lastTick ?? now)) / 1000,
+      0,
       this.maxResourceUpdateSecs,
     );
     if (dt < this.minResourceUpdateSecs && this.lastTick != undefined) {
@@ -841,7 +831,7 @@ export class ResourceManager {
 
     this.lastTick = now;
     const epoch = now - dt * 1000;
-    const cache: Record<string, Decimal> = {};
+    const cache: Record<string, number> = {};
 
     // Automatically unlock resources whose unlock cost can be afforded
     Object.values(this.resources).forEach((res) => {
@@ -868,11 +858,10 @@ export class ResourceManager {
 
       res.rate.lastCountUpdate ??= epoch;
       res.rate.lastCount ??= cache[res.name];
-      res.execution.lastTick = Math.min(
-        Math.max(
-          res.execution.lastTick ?? epoch,
-          now - this.maxResourceUpdateSecs * 1000,
-        ),
+      res.execution.lastTick = clamp(
+        res.execution.lastTick ?? epoch,
+        now - this.maxResourceUpdateSecs * 1000,
+
         now,
       );
       res.execution.lastAttempt = now;
@@ -883,10 +872,7 @@ export class ResourceManager {
     const tickResources = resources.filter((res) => res.tick);
     const tickScale = 1 / 1000 / this.globalTimeDilation;
     while (dt > 0) {
-      dt -= Math.min(
-        Math.max(dt, this.minResourceUpdateSecs),
-        this.maxResourceTickSecs,
-      );
+      dt -= clamp(dt, this.minResourceUpdateSecs, this.maxResourceTickSecs);
       const slice = now - dt * 1000;
 
       tickResources.forEach((res) => {
@@ -913,14 +899,10 @@ export class ResourceManager {
 
     // Automatically award resources whose cost can be afforded
     resources.forEach((res) => {
-      if (
-        res.autoAward &&
-        !res.disabled &&
-        Decimal.lt(res.count, res.maxCount ?? 0)
-      ) {
-        const req = res.cost(Decimal.add(res.count, 1));
+      if (res.autoAward && !res.disabled && res.count < (res.maxCount ?? 0)) {
+        const req = res.cost(res.count + 1);
         if (this.canAfford(this.resolveAll(req), false)) {
-          res.count = Decimal.add(res.count, 1);
+          res.count += 1;
 
           if (res.onPurchase) {
             res.onPurchase({
@@ -942,9 +924,7 @@ export class ResourceManager {
         res.rate.lastCount == undefined ||
         rateDt >= this.rateUpdateSecs
       ) {
-        res.rate.count = Decimal.minus(res.count, res.rate.lastCount ?? 0).div(
-          rateDt,
-        );
+        res.rate.count = (res.count - (res.rate.lastCount ?? 0)) / rateDt;
         res.rate.lastCount = res.count;
         res.rate.lastCountUpdate = now;
         res.rate.pastCounts.unshift(res.rate.count);
@@ -967,8 +947,8 @@ export class ResourceManager {
 
     // Call the onChange callbacks on all resources that changed
     resources.forEach((res) => {
-      cache[res.name] = Decimal.minus(res.count, cache[res.name] ?? 0);
-      if (cache[res.name].eq(0)) {
+      cache[res.name] = res.count - (cache[res.name] ?? 0);
+      if (cache[res.name] === 0) {
         delete cache[res.name];
       }
 
@@ -1021,5 +1001,17 @@ export class ResourceManager {
     }
 
     return this.execution[source].lastResult;
+  }
+}
+
+export function clamp(n = 0, min = 0, max = 1): number {
+  if (isNaN(n)) {
+    return min;
+  } else if (n < min) {
+    return min;
+  } else if (n > max) {
+    return max;
+  } else {
+    return n;
   }
 }

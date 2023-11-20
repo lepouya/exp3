@@ -239,3 +239,8 @@ html {
   https://ionicframework.com/docs/layout/dynamic-font-scaling */
   --ion-dynamic-font: var(--ion-default-dynamic-font);
 }
+
+.ion-page {
+  max-width: min(80rem, 100%);
+  margin: auto;
+}

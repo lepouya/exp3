@@ -1,5 +1,3 @@
-import Decimal from "break_eternity.js";
-
 let skipEncoding = false;
 export function codec(s: string): string {
   if (skipEncoding || !s) {
@@ -25,7 +23,7 @@ export function stringify<T>(value: T, space?: string | number | undefined) {
       return undefined;
     } else if (!v || typeof v !== "object" || Array.isArray(v)) {
       return v;
-    } else if (v instanceof Decimal || v instanceof Date) {
+    } else if (v instanceof Date) {
       return v.toJSON();
     } else if (Object.keys(v).length === 0) {
       // No need to save empty records

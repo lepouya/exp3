@@ -1,17 +1,15 @@
-import Decimal, { DecimalSource } from "break_eternity.js";
-
 import Resource from "../model/Resource";
 import formatWithNotation, { Notation } from "./notation";
 
 export default function Format(
-  value?: DecimalSource | Date | Resource | undefined | null,
+  value?: number | string | Date | Resource | undefined | null,
   options?: NumberOptions & TimeOptions & WordOptions & ResourceOptions,
 ): string {
   if (value == null || value == undefined || typeof value === "string") {
     return Format.word(value ?? undefined, options);
   } else if (value instanceof Date) {
     return Format.time(value.getTime(), options);
-  } else if (value instanceof Decimal || typeof value === "number") {
+  } else if (typeof value === "number") {
     return Format.number(value, options);
   } else if (value instanceof Resource) {
     const output: string[] = [];
@@ -58,7 +56,7 @@ type NumberOptions = {
   alwaysShowSign?: boolean;
 };
 
-Format.number = function (num: DecimalSource, options?: NumberOptions): string {
+Format.number = function (num: number, options?: NumberOptions): string {
   const prec = options?.prec ?? 0;
   const smallPrec = options?.smallPrec ?? prec;
   const expPrec =
@@ -69,12 +67,7 @@ Format.number = function (num: DecimalSource, options?: NumberOptions): string {
     );
 
   let r = formatWithNotation(num, options?.notation, prec, expPrec, smallPrec);
-  if (
-    r &&
-    options?.alwaysShowSign &&
-    !"+-".includes(r[0]) &&
-    Decimal.gte(num, 0)
-  ) {
+  if (r && options?.alwaysShowSign && !"+-".includes(r[0]) && num >= 0) {
     r = "+" + r;
   }
 
@@ -235,7 +228,7 @@ Format.word = function (word?: string, options?: WordOptions): string {
 
 type ResourceOptions = {
   override?: Partial<Resource>;
-  round?: typeof Decimal.round;
+  round?: typeof Math.round;
   useRatePercent?: boolean;
 };
 
@@ -252,7 +245,7 @@ Format.resource = function (
   options.ago ??= "";
   options.prec ??= display === "time" ? 3 : display === "number" ? 2 : 1;
   options.smallPrec ??= display === "number" ? 0 : options.prec;
-  options.round ??= display === "number" ? Decimal.floor : Decimal.round;
+  options.round ??= display === "number" ? Math.floor : Math.round;
   options.millis ??= options.prec > 0;
   options.notation ||= res.manager?.globalNumberFormat || "Standard";
   options.tolerance ??=
@@ -269,27 +262,27 @@ Format.resource = function (
       ? options.override.value()
       : options.override?.count) ?? (res.value ? res.value() : res.count);
   if (count) {
-    count = options.round(count.div(options.tolerance)).mul(options.tolerance);
+    count = options.round(count / options.tolerance) * options.tolerance;
   }
   let value = undefined,
     valueSign = undefined;
-  if (count && display !== "none") {
+  if (count != undefined && display !== "none") {
     if (display === "time") {
-      value = Format.time(count.toNumber() * 1000, options);
+      value = Format.time(count * 1000, options);
     } else if (display === "percentage") {
       value = Format(count, options) + "%";
     } else {
       value = Format(count, options);
     }
 
-    valueSign = signs[count.cmp_tolerance(Decimal.dZero, options.tolerance)];
+    valueSign = signs[cmp_tolerance(count, 0, options.tolerance)];
   }
 
-  options.count ??= count ? count.toNumber() : undefined;
+  options.count ??= count ? count : undefined;
   options.name ??= res.name;
   options.singularName ??= res.singularName ?? res.pluralName;
   options.pluralName ??= res.pluralName ?? res.singularName;
-  const name = Format(options.override?.name, options) || undefined;
+  const name = Format(options.override?.name ?? "", options) || undefined;
 
   const icon = res.icon;
 
@@ -307,12 +300,16 @@ Format.resource = function (
 
   let rate = undefined,
     rateSign = undefined;
-  if (res.rate?.lastCountUpdate && res.rate.count && display !== "none") {
+  if (
+    res.rate?.lastCountUpdate != undefined &&
+    res.rate.count != undefined &&
+    display !== "none"
+  ) {
     let rateValue = res.rate.count;
-    options.useRatePercent ??= count && count.gte(1000) && rateValue.gte(1000);
+    options.useRatePercent ??= !!count && count >= 1000 && rateValue >= 1000;
     if (display === "number" && options.useRatePercent && count) {
       display = "percentage";
-      rateValue = rateValue.div(count);
+      rateValue = rateValue / count;
     }
 
     options.len = options.len !== "long" ? "tiny" : "short";
@@ -321,9 +318,9 @@ Format.resource = function (
     options.prec += 2;
 
     if (display === "time") {
-      rate = Format.time(res.rate.count.toNumber() * 1000, options);
+      rate = Format.time(res.rate.count * 1000, options);
     } else if (display === "percentage") {
-      rate = Format(rateValue.mul(100), options) + "%";
+      rate = Format(rateValue * 100, options) + "%";
     } else {
       rate = Format(rateValue, options);
     }
@@ -332,7 +329,7 @@ Format.resource = function (
       rate = rate + "/s";
     }
 
-    rateSign = signs[Decimal.cmp_tolerance(rateValue, 0, options.tolerance)];
+    rateSign = signs[cmp_tolerance(rateValue, 0, options.tolerance)];
   }
 
   return { active, name, icon, value, valueSign, max, rate, rateSign, extras };
@@ -343,3 +340,18 @@ const signs: Record<-1 | 0 | 1, "negative" | "zero" | "positive"> = {
   [0]: "zero",
   [1]: "positive",
 };
+
+export function cmp_tolerance(
+  a: number,
+  b: number,
+  tolerance: number,
+): -1 | 0 | 1 {
+  const diff = Math.abs(a - b);
+  if (diff < tolerance) {
+    return 0;
+  } else if (a < b) {
+    return -1;
+  } else {
+    return 1;
+  }
+}

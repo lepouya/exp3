@@ -1,46 +1,45 @@
 // Inspired by github:antimatter-dimensions/notations
 
-import Decimal, { DecimalSource } from "break_eternity.js";
-
 export type Notation = {
   name: string;
 
   infinite(): string;
-  decimal(value: Decimal, prec?: number, expPrec?: number): string;
+  decimal(value: number, prec?: number, expPrec?: number): string;
   small(value: number, prec?: number): string;
-  verySmall(value: Decimal, prec?: number): string;
-  negativeVerySmall(value: Decimal, prec?: number): string;
+  verySmall(value: number, prec?: number): string;
+  negativeVerySmall(value: number, prec?: number): string;
   negativeSmall(value: number, prec?: number): string;
-  negativeDecimal(value: Decimal, prec?: number, expPrec?: number): string;
+  negativeDecimal(value: number, prec?: number, expPrec?: number): string;
   negativeInfinite(): string;
 
-  exponent?: (n: Decimal, prec?: number, expPrec?: number) => string;
+  exponent?: (n: number, prec?: number, expPrec?: number) => string;
 };
 
 export default function formatWithNotation(
-  value: DecimalSource,
+  value: number,
   notation?: Notation | string,
   basePrec = 0,
   expPrec = basePrec,
   smallPrec = 0,
 ): string {
-  const decimal = Decimal.fromValue_noAlloc(value);
   notation =
     (typeof notation === "string" ? notations[notation] : notation) ?? basic;
-  if (!decimal.isFinite()) {
-    return decimal.sign < 0 ? notation.negativeInfinite() : notation.infinite();
-  } else if (decimal.exponent < -300) {
-    return decimal.sign < 0
-      ? notation.negativeVerySmall(decimal.abs(), smallPrec)
-      : notation.verySmall(decimal, smallPrec);
-  } else if (decimal.exponent < 3) {
-    return decimal.sign < 0
-      ? notation.negativeSmall(decimal.abs().toNumber(), smallPrec)
-      : notation.small(decimal.toNumber(), smallPrec);
+  if (!isFinite(value)) {
+    return Math.sign(value) < 0
+      ? notation.negativeInfinite()
+      : notation.infinite();
+  } else if (Math.log10(value) < -100) {
+    return Math.sign(value) < 0
+      ? notation.negativeVerySmall(Math.abs(value), smallPrec)
+      : notation.verySmall(value, smallPrec);
+  } else if (Math.log10(value) < 3) {
+    return Math.sign(value) < 0
+      ? notation.negativeSmall(Math.abs(value), smallPrec)
+      : notation.small(value, smallPrec);
   }
-  return decimal.sign < 0
-    ? notation.negativeDecimal(decimal.abs(), basePrec, expPrec)
-    : notation.decimal(decimal, basePrec, expPrec);
+  return Math.sign(value) < 0
+    ? notation.negativeDecimal(Math.abs(value), basePrec, expPrec)
+    : notation.decimal(value, basePrec, expPrec);
 }
 
 const notations: Record<string, Notation> = {};
@@ -59,13 +58,13 @@ const basic: Notation = {
     return `-${this.infinite()}`;
   },
   decimal(v, p, e) {
-    return v.toStringWithDecimalPlaces(p ?? e ?? 0);
+    return v.toFixed(p ?? e ?? 0);
   },
   negativeDecimal(v, p, e) {
     return `-${this.decimal(v, p, e)}`;
   },
   verySmall(v, p) {
-    return this.small(v.toNumber(), p);
+    return this.small(v, p);
   },
   negativeVerySmall(v, p) {
     return `-${this.verySmall(v, p)}`;
@@ -90,7 +89,7 @@ const standard = formatWithNotation.register({
 const registerMixed = (n: Notation, s = standard) =>
   formatWithNotation.register({
     name: `Mixed ${n.name}`,
-    decimal: (v, p, e) => (v.exponent < 33 ? s : n).decimal(v, p, e),
+    decimal: (v, p, e) => (Math.log10(v) < 33 ? s : n).decimal(v, p, e),
   });
 
 registerMixed(
@@ -118,7 +117,7 @@ registerMixed(
     name: "Logarithmic",
     decimal(v, p, e) {
       this.exponent ??= formatWithCommas(this, (n, p) => n.toFixed(p));
-      return `e${this.exponent(v.log10(), p, e)}`;
+      return `e${this.exponent(Math.log10(v), p, e)}`;
     },
   }),
 );
@@ -133,8 +132,8 @@ const abbrs = {
   prefixes_2: ["", "MI-", "MC-", "NA-", "PC-", "FM-", "AT-", "ZP-"],
 };
 
-function standardAbbr(rawExp: Decimal): string {
-  const exp = rawExp.toNumber() - 1;
+function standardAbbr(rawExp: number): string {
+  const exp = rawExp - 1;
   if (exp === -1) {
     return "";
   } else if (exp > settings.commas.min) {
@@ -162,12 +161,12 @@ function standardAbbr(rawExp: Decimal): string {
 function formatWithCommas(
   notation: Partial<Notation>,
   formatting: (n: number, p: number) => string = (n) => n.toString(),
-): (e: Decimal, prec?: number, expPrec?: number) => string {
+): (e: number, prec?: number, expPrec?: number) => string {
   return function (e, prec = settings.prec, expPrec = Math.max(2, prec)) {
-    if (e.lt(settings.commas.min)) {
-      return formatting(e.toNumber(), Math.max(prec, 1));
-    } else if (settings.commas.show && e.lt(settings.commas.max)) {
-      const decimalPointSplit = formatting(e.toNumber(), 0).split(".");
+    if (e < settings.commas.min) {
+      return formatting(e, Math.max(prec, 1));
+    } else if (settings.commas.show && e < settings.commas.max) {
+      const decimalPointSplit = formatting(e, 0).split(".");
       decimalPointSplit[0] = decimalPointSplit[0].replace(/\w+$/g, (v) =>
         Array.from(Array(Math.ceil(v.length / 3)))
           .map((_, i) => (i ? v.slice(-3 * (i + 1), -3 * i) : v.slice(-3)))
@@ -181,22 +180,22 @@ function formatWithCommas(
 }
 
 function formatWithExp(
-  expFormat: (e: Decimal, prec: number) => string,
+  expFormat: (e: number, prec: number) => string,
   steps: number,
   base: number = 10,
-): (n: Decimal, prec?: number, expPrec?: number) => string {
+): (n: number, prec?: number, expPrec?: number) => string {
   return function (n, prec = 0, expPrec = 0) {
     const realBase = base ** steps;
-    let exponent = n.log(realBase).floor().mul(steps);
+    let exponent = Math.floor(Math.log(n) / Math.log(realBase)) * steps;
     if (base >= 100) {
-      exponent = exponent.max(Decimal.dZero);
+      exponent = Math.max(exponent, 0);
     }
-    let m = n.div(exponent.pow_base(base)).toFixed(prec);
+    let m = (n / base ** exponent).toFixed(prec);
     if (m === realBase.toFixed(prec)) {
       m = (1).toFixed(prec);
-      exponent = exponent.add(steps);
+      exponent = exponent + steps;
     }
-    if (exponent.eq(Decimal.dZero)) {
+    if (exponent === 0) {
       return m;
     }
     return `${m}${base === 10 ? "e" : " "}${expFormat(exponent, expPrec)}`;

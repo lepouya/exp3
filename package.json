@@ -34,7 +34,6 @@
     "@ionic/react": "^7",
     "@ionic/react-router": "^7",
     "@ionic/storage": "latest",
-    "break_eternity.js": "latest",
     "ionicons": "^7",
     "react": "latest",
     "react-dom": "latest",
@@ -51,7 +50,7 @@
     "@types/styled-components": "latest",
     "@vitejs/plugin-legacy": "latest",
     "@vitejs/plugin-react": "latest",
-    "sass": "^1.69.5",
+    "sass": "latest",
     "typescript": "latest",
     "vite": "latest",
     "vitest": "latest"

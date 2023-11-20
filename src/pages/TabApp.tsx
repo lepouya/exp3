@@ -31,7 +31,7 @@ export default function TabApp() {
                     <IonTitle>{tab.title || tab.path}</IonTitle>
                   </IonToolbar>
                 </IonHeader>
-                <IonContent fullscreen>{tab.content}</IonContent>
+                <IonContent>{tab.content}</IonContent>
               </IonPage>
             </Route>
           ))}

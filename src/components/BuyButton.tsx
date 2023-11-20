@@ -1,4 +1,3 @@
-import Decimal, { DecimalSource } from "break_eternity.js";
 import React, { MouseEvent } from "react";
 
 import { IonButton, IonChip } from "@ionic/react";
@@ -18,11 +17,11 @@ export type BuyButtonProps = {
   increment?: number;
   precision?: number;
 
-  gainFactor?: DecimalSource;
-  costFactor?: DecimalSource;
+  gainFactor?: number;
+  costFactor?: number;
   mode?: "buy" | "sell";
 
-  overrideCount?: DecimalSource;
+  overrideCount?: number | string;
   overrideBuyAmount?: string;
 
   prefix?: string;
@@ -39,7 +38,7 @@ export type BuyButtonProps = {
   className?: string;
   style?: React.CSSProperties;
 
-  onPurchase?: (resource: Resource, bought: DecimalSource) => void;
+  onPurchase?: (resource: Resource, bought: number) => void;
 };
 
 export default function BuyButton({
@@ -99,7 +98,7 @@ export default function BuyButton({
     return rcs.map(({ resource, count }, i) => {
       resource = ResourceManager.get(resource);
       const res = Format.resource(resource, {
-        override: { count: Decimal.mul(count, Factor) },
+        override: { count: count * Factor },
         prec: precision,
         alwaysShowSign: true,
       });
@@ -119,9 +118,9 @@ export default function BuyButton({
     });
   }
 
-  function doPurchase(amount: DecimalSource, event: MouseEvent) {
+  function doPurchase(amount: number, event: MouseEvent) {
     event.preventDefault();
-    if (!enabled || Decimal.eq(amount, 0)) {
+    if (!enabled || amount === 0) {
       return;
     }
 
@@ -144,8 +143,8 @@ export default function BuyButton({
       ? res.buy(amount, "partial", true, gainFactor, costFactor, overrideCount)
       : res.sell(amount, "full", true, 1, costFactor, overrideCount);
   const active = ResourceManager.canAfford(tx.cost);
-  const hasGain = tx.gain.some(({ count }) => Decimal.neq(count, 0));
-  const hasCost = tx.cost.some(({ count }) => Decimal.neq(count, 0));
+  const hasGain = tx.gain.some(({ count }) => count !== 0);
+  const hasCost = tx.cost.some(({ count }) => count !== 0);
   const classNames = [className, "buy-button", active ? null : "inactive"];
 
   if (!hasGain) {
@@ -182,9 +181,10 @@ BuyButton.BuyAmountButtons = () => {
         .map((value) => (
           <IonButton
             key={value}
-            fill={value === rm.globalBuyAmount ? "outline" : "solid"}
+            fill={value === rm.globalBuyAmount ? "solid" : "outline"}
             onClick={() => (rm.globalBuyAmount = value)}
             id={`button-${value.replace(/\W/g, "")}`}
+            style={{ height: "3em" }}
           >
             {buyIcons[value[0]] && (
               <Icon icon={buyIcons[value[0]]} size="small" />
@@ -197,9 +197,7 @@ BuyButton.BuyAmountButtons = () => {
 };
 
 export type BuyAllButtonProps = {
-  resources?:
-    | Record<string, DecimalSource | undefined>
-    | Array<Resource | string>;
+  resources?: Record<string, number | undefined> | Array<Resource | string>;
   enabled?: boolean;
   showNames?: boolean;
 
@@ -207,17 +205,23 @@ export type BuyAllButtonProps = {
   minNum?: number;
   increment?: number;
 
-  overrideCount?: DecimalSource;
+  overrideCount?: number | string;
   overrideBuyAmount?: string;
 
-  gainFactor?: DecimalSource;
-  costFactor?: DecimalSource;
+  gainFactor?: number;
+  costFactor?: number;
 
   prefix?: string;
   infix?: string;
   suffix?: string;
   and?: string;
   all?: string;
+
+  shape?: "round" | "square";
+  fill?: "clear" | "outline" | "solid";
+  size?: "small" | "default" | "large";
+  color?: string;
+  expand?: "full" | "block";
 
   className?: string;
   style?: React.CSSProperties;
@@ -245,6 +249,12 @@ BuyButton.BuyAllButton = ({
   infix = "of",
   and = " & ",
   all = "all",
+
+  shape,
+  fill,
+  size,
+  color,
+  expand,
 
   className,
   style,
@@ -302,6 +312,11 @@ BuyButton.BuyAllButton = ({
       disabled={!enabled}
       className={["buy-all-button", className].filter(Boolean).join(" ")}
       style={style}
+      shape={shape === "round" ? "round" : undefined}
+      fill={fill}
+      size={size}
+      color={color}
+      expand={expand}
     >
       {prefix && <div className="prefix">{prefix}</div>}
       <IonChip color={chipColor["positive"]} style={{ textTransform: "none" }}>
