@@ -146,6 +146,11 @@ module Game {
       const data = await storage.db?.get(key);
       return decode(data);
     }
+
+    export async function clear() {
+      await initialize();
+      await storage.db?.clear();
+    }
   }
 
   export module ResourceManager {

@@ -1,3 +1,4 @@
+import { createBrowserHistory } from "history";
 import { settingsOutline } from "ionicons/icons";
 import React from "react";
 
@@ -8,6 +9,7 @@ import {
   IonCardHeader,
   IonCardSubtitle,
   IonCardTitle,
+  IonCheckbox,
   IonCol,
   IonGrid,
   IonRange,
@@ -23,14 +25,17 @@ import Format from "../utils/format";
 import formatWithNotation from "../utils/notation";
 
 export default function SettingsTab() {
+  const debug = window.location.search.toLowerCase().includes("debug");
+
   return (
     <IonGrid>
       <GameDataPanel />
       <NumberFormatPanel />
       <AdvancedPanel />
+      <ResetPanel />
+      {debug && <DebugPanel />}
     </IonGrid>
   );
-  // TODO: reset
   // TODO: debug
 }
 
@@ -78,7 +83,11 @@ function GameDataPanel() {
         <IonRow>
           <IonCol size="6">
             <IonButton
-              onClick={() => Game.ResourceManager.load()}
+              onClick={() => {
+                Game.ResourceManager.load()
+                  .then(() => Game.ResourceManager.save())
+                  .then(reload);
+              }}
               expand="block"
             >
               Load Game
@@ -108,7 +117,7 @@ function GameDataPanel() {
             <IonButton
               onClick={() => {
                 rm.load(decode(textContents));
-                Game.ResourceManager.signalUpdate();
+                Game.ResourceManager.save().then(reload);
               }}
               expand="block"
             >
@@ -336,6 +345,98 @@ function AdvancedPanel() {
   );
 }
 
+function ResetPanel() {
+  const [resetAcknowledged, setResetAcknowledged] = React.useState(false);
+
+  function resetGame() {
+    if (!resetAcknowledged) {
+      return;
+    }
+    setResetAcknowledged(false);
+    for (const key in ResourceManager.singleton.resources) {
+      delete ResourceManager.singleton.resources[key];
+    }
+    ResourceManager.reset();
+    Game.Database.clear().then(reload);
+  }
+
+  return (
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>
+          <IonRow>
+            <IonCol size="12" className="ion-text-center">
+              <IonText>Game Reset</IonText>
+            </IonCol>
+          </IonRow>
+        </IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <IonRow>
+          <IonCol size="12">
+            <IonText color="danger">
+              WARNING: this will completely reset your game and delete all saved
+              progress and setting. Only use this if you want to restart the
+              game from beginning, or if something in the settings is so messed
+              up that the game is now unplayable.
+            </IonText>
+          </IonCol>
+          <IonCol size="12">
+            <IonCheckbox
+              justify="end"
+              checked={resetAcknowledged}
+              onIonChange={() => setResetAcknowledged((a) => !a)}
+            >
+              I understand what this means and still want to reset the game
+            </IonCheckbox>
+          </IonCol>
+          <IonCol size="12" class="ion-text-right">
+            <IonButton
+              onClick={resetGame}
+              disabled={!resetAcknowledged}
+              color={resetAcknowledged ? "danger" : "medium"}
+            >
+              Reset everything
+            </IonButton>
+          </IonCol>
+        </IonRow>
+      </IonCardContent>
+    </IonCard>
+  );
+}
+
+function DebugPanel() {
+  const rm = Game.useResourceManager();
+  if (!window.location.search.toLowerCase().includes("debug")) {
+    return null;
+  }
+
+  return (
+    <IonCard>
+      <IonCardHeader>
+        <IonCardTitle>
+          <IonRow>
+            <IonCol size="12" className="ion-text-center">
+              <IonText>Debug Context</IonText>
+            </IonCol>
+          </IonRow>
+        </IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <IonRow>
+          <IonCol size="12">
+            <IonTextarea
+              autoGrow={true}
+              readonly={true}
+              value={encode(rm, true)}
+            ></IonTextarea>
+          </IonCol>
+        </IonRow>
+      </IonCardContent>
+    </IonCard>
+  );
+}
+
 function saveFile() {
   const rm = ResourceManager.singleton;
   const debug = window.location.search.toLowerCase().includes("debug");
@@ -380,6 +481,7 @@ function loadFile() {
         rm.load(decode(contents));
         rm.tick(undefined, "load");
         Game.ResourceManager.signalUpdate();
+        Game.ResourceManager.save().then(reload);
       };
 
       reader.readAsText(files[0]);
@@ -388,4 +490,10 @@ function loadFile() {
   );
 
   fileInput.click();
+}
+
+function reload() {
+  const history = createBrowserHistory();
+  history.push("/");
+  window.location.reload();
 }
