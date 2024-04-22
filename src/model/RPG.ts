@@ -256,9 +256,9 @@ module RPG {
   ];
 
   export const ImageLayers = <const>{
-    main: { width: 512, height: 1024 },
+    main: { width: 1024, height: 1344 },
     icon: { width: 64, height: 64 },
-    small: { width: 128, height: 256 },
+    small: { width: 256, height: 336 },
   };
 
   export const ItemsOrder: Record<ItemType, number> = <const>{
@@ -692,16 +692,17 @@ function _iconCrop(cx: number, cy: number, size: number) {
     smoothing: <ImageSmoothingQuality>"high",
   };
 }
+
 const _main2icon: Record<RPG.ItemType, Partial<ImageProps>> = {
-  character: _iconCrop(256, 150, 200),
-  rank: _iconCrop(256, 512, 256),
-  body: _iconCrop(256, 370, 400),
-  head: _iconCrop(256, 128, 200),
-  feet: _iconCrop(256, 870, 200),
-  hand: _iconCrop(128, 480, 128),
-  weapon: _iconCrop(128, 480, 256),
-  offhand: _iconCrop(384, 480, 256),
-  cloak: _iconCrop(256, 370, 400),
-  amulet: _iconCrop(256, 220, 200),
-  extra: _iconCrop(256, 160, 256),
+  character: _iconCrop(512, 192, 256),
+  rank: _iconCrop(512, 512, 512),
+  body: _iconCrop(512, 512, 800),
+  head: _iconCrop(512, 168, 400),
+  feet: _iconCrop(512, 1100, 450),
+  hand: _iconCrop(300, 640, 300),
+  weapon: _iconCrop(300, 640, 600),
+  offhand: _iconCrop(768, 640, 512),
+  cloak: _iconCrop(512, 500, 800),
+  amulet: _iconCrop(512, 290, 400),
+  extra: _iconCrop(512, 210, 512),
 };

@@ -72,83 +72,43 @@
     }
   },
   "character": {
-    "Guy 1": {
+    "Jeff": {
       "images": {
         "main": {
-          "0": "character/char-000-0.png",
-          "2": "character/char-000-2.png"
+          "2": "character/char-000-02.png",
+          "5": "character/char-000-05.png"
         }
       }
     },
-    "Girl 1": {
+    "Serena": {
       "images": {
         "main": {
-          "0": "character/char-001-0.png",
-          "2": "character/char-001-2.png"
+          "2": "character/char-001-02.png",
+          "5": "character/char-001-05.png"
         }
       }
     },
-    "Guy 2": {
+    "Chad": {
       "images": {
         "main": {
-          "0": "character/char-002-0.png",
-          "2": "character/char-002-2.png"
+          "2": "character/char-002-02.png",
+          "5": "character/char-002-05.png"
         }
       }
     },
-    "Girl 2": {
+    "Mélina": {
       "images": {
         "main": {
-          "0": "character/char-003-0.png",
-          "2": "character/char-003-2.png"
+          "2": "character/char-003-02.png",
+          "5": "character/char-003-05.png"
         }
       }
     },
-    "Girl 3": {
+    "Skår": {
       "images": {
         "main": {
-          "0": "character/char-004-0.png",
-          "2": "character/char-004-2.png"
-        }
-      }
-    },
-    "Guy 3": {
-      "images": {
-        "main": {
-          "0": "character/char-005-0.png",
-          "2": "character/char-005-2.png"
-        }
-      }
-    },
-    "Girl 4": {
-      "images": {
-        "main": {
-          "0": "character/char-006-0.png",
-          "2": "character/char-006-2.png"
-        }
-      }
-    },
-    "Guy 4": {
-      "images": {
-        "main": {
-          "0": "character/char-007-0.png",
-          "2": "character/char-007-2.png"
-        }
-      }
-    },
-    "Catgirl": {
-      "images": {
-        "main": {
-          "0": "character/char-008-0.png",
-          "2": "character/char-008-2.png"
-        }
-      }
-    },
-    "Robot 9000": {
-      "images": {
-        "main": {
-          "0": "character/char-009-0.png",
-          "2": "character/char-009-2.png"
+          "2": "character/char-004-02.png",
+          "5": "character/char-004-05.png"
         }
       }
     }
@@ -157,42 +117,32 @@
     "Tattered Rags": {
       "images": {
         "main": {
-          "1": "body/body-000-1.png"
+          "1": "body/body-001-01.png",
+          "3": "body/body-001-03.png"
         }
       }
     },
-    "Dress 1": {
+    "Leather Tights": {
       "images": {
         "main": {
-          "1": "body/body-001-1.png"
+          "1": "body/body-002-01.png",
+          "3": "body/body-002-03.png"
         }
       }
     },
-    "Tuxedo": {
+    "Acolyte Robe": {
       "images": {
         "main": {
-          "1": "body/body-002-1.png"
+          "1": "body/body-003-01.png",
+          "3": "body/body-003-03.png"
         }
       }
     },
-    "Dress 2": {
+    "Emerald Platemail": {
       "images": {
         "main": {
-          "1": "body/body-003-1.png"
-        }
-      }
-    },
-    "Dress 3": {
-      "images": {
-        "main": {
-          "1": "body/body-004-1.png"
-        }
-      }
-    },
-    "Bronze Armor": {
-      "images": {
-        "main": {
-          "1": "body/body-005-1.png"
+          "1": "body/body-004-01.png",
+          "3": "body/body-004-03.png"
         }
       }
     }
@@ -201,21 +151,32 @@
     "Bandaged Arms": {
       "images": {
         "main": {
-          "1": "hand/hand-000-1.png"
+          "1": "hand/hand-001-01.png",
+          "3": "hand/hand-001-03.png"
         }
       }
     },
     "Leather Gloves": {
       "images": {
         "main": {
-          "1": "hand/hand-001-1.png"
+          "1": "hand/hand-002-01.png",
+          "3": "hand/hand-002-03.png"
         }
       }
     },
-    "Bronze Gauntlets": {
+    "Acolyte Gloves": {
       "images": {
         "main": {
-          "1": "hand/hand-002-1.png"
+          "1": "hand/hand-003-01.png",
+          "3": "hand/hand-003-03.png"
+        }
+      }
+    },
+    "Emerald Gauntlets": {
+      "images": {
+        "main": {
+          "1": "hand/hand-004-01.png",
+          "3": "hand/hand-004-03.png"
         }
       }
     }
@@ -224,111 +185,126 @@
     "Bandaged Feet": {
       "images": {
         "main": {
-          "1": "feet/feet-000-1.png"
+          "1": "feet/feet-001-01.png",
+          "3": "feet/feet-001-03.png"
         }
       }
     },
     "Leather Boots": {
       "images": {
         "main": {
-          "1": "feet/feet-001-1.png"
+          "1": "feet/feet-002-01.png",
+          "3": "feet/feet-002-03.png"
         }
       }
     },
-    "Bronze Gleaves": {
+    "Acolyte Shoes": {
       "images": {
         "main": {
-          "1": "feet/feet-002-1.png"
+          "1": "feet/feet-003-01.png",
+          "3": "feet/feet-003-03.png"
+        }
+      }
+    },
+    "Emerald Greaves": {
+      "images": {
+        "main": {
+          "1": "feet/feet-004-01.png",
+          "3": "feet/feet-004-03.png"
         }
       }
     }
   },
   "head": {
-    "Cap 1": {
+    "Bandaged Head": {
       "images": {
         "main": {
-          "2": "head/head-000-2.png"
+          "1": "head/head-001-01.png",
+          "6": "head/head-001-06.png"
         }
       }
     },
-    "Cap 2": {
+    "Leather Cap": {
       "images": {
         "main": {
-          "2": "head/head-001-2.png"
+          "1": "head/head-002-01.png",
+          "6": "head/head-002-06.png"
         }
       }
     },
-    "Flower Head": {
+    "Acolyte Hat": {
       "images": {
         "main": {
-          "2": "head/head-002-2.png"
+          "1": "head/head-003-01.png",
+          "6": "head/head-003-06.png"
         }
       }
     },
-    "Tiara 1": {
+    "Emerald Helmet": {
       "images": {
         "main": {
-          "2": "head/head-003-2.png"
-        }
-      }
-    },
-    "Bronze Helm": {
-      "images": {
-        "main": {
-          "2": "head/head-004-2.png"
+          "1": "head/head-004-01.png",
+          "6": "head/head-004-06.png"
         }
       }
     }
   },
   "weapon": {
-    "Sword 1": {
+    "Steel Sword": {
       "images": {
         "main": {
-          "2": "weapon/weapon-000-2.png"
+          "1": "weapon/weapon-001-01.png",
+          "6": "weapon/weapon-001-06.png"
         }
       }
     },
-    "Wand 1": {
+    "Acolyte Wand": {
       "images": {
         "main": {
-          "2": "weapon/weapon-001-2.png"
+          "1": "weapon/weapon-002-01.png",
+          "6": "weapon/weapon-002-06.png"
         }
       }
     },
-    "Sword 2": {
+    "Yew Shortbow": {
       "images": {
         "main": {
-          "2": "weapon/weapon-002-2.png"
+          "1": "weapon/weapon-003-01.png",
+          "6": "weapon/weapon-003-06.png"
         }
       }
     },
-    "Staff 1": {
+    "Wizard Staff": {
       "images": {
         "main": {
-          "2": "weapon/weapon-003-2.png"
+          "1": "weapon/weapon-004-01.png",
+          "6": "weapon/weapon-004-06.png"
         }
       }
     }
   },
   "offhand": {
-    "Wooden Shield": {
+    "Steak Knife": {
       "images": {
         "main": {
-          "1": "offhand/offhand-000-1.png"
+          "1": "offhand/offhand-001-01.png",
+          "6": "offhand/offhand-001-06.png"
         }
       }
     },
     "Peace Flower": {
       "images": {
         "main": {
-          "1": "offhand/offhand-001-1.png"
+          "1": "offhand/offhand-002-01.png",
+          "6": "offhand/offhand-002-06.png"
         }
       }
     },
-    "Steak Knife": {
+    "Teddy Bear": {
       "images": {
         "main": {
-          "1": "offhand/offhand-002-1.png"
+          "1": "offhand/offhand-003-01.png",
+          "6": "offhand/offhand-003-06.png"
         }
       }
     }
@@ -337,39 +313,39 @@
     "Tattered Cloak": {
       "images": {
         "main": {
-          "0": "cloak/cloak-000-0.png",
-          "2": "cloak/cloak-000-2.png"
+          "1": "cloak/cloak-001-01.png",
+          "5": "cloak/cloak-001-05.png"
         }
       }
     },
     "Red Cloak": {
       "images": {
         "main": {
-          "0": "cloak/cloak-001-0.png",
-          "2": "cloak/cloak-001-2.png"
+          "1": "cloak/cloak-002-01.png",
+          "5": "cloak/cloak-002-05.png"
         }
       }
     }
   },
   "amulet": {
-    "Simple Chain": {
+    "Choker": {
       "images": {
         "main": {
-          "2": "amulet/amulet-000-2.png"
+          "6": "amulet/amulet-001-06.png"
         }
       }
     },
-    "Red Choker": {
+    "Key Pendant": {
       "images": {
         "main": {
-          "2": "amulet/amulet-001-2.png"
+          "6": "amulet/amulet-002-06.png"
         }
       }
     },
     "Magic Amulet": {
       "images": {
         "main": {
-          "2": "amulet/amulet-002-2.png"
+          "6": "amulet/amulet-003-06.png"
         }
       }
     }
@@ -378,14 +354,14 @@
     "Eye Patch": {
       "images": {
         "main": {
-          "2": "extra/extra-000-2.png"
+          "5": "extra/extra-001-05.png"
         }
       }
     },
     "Pixie Companion": {
       "images": {
         "main": {
-          "1": "extra/extra-001-1.png"
+          "5": "extra/extra-002-05.png"
         }
       }
     }
