@@ -18,7 +18,6 @@
 
 ## Glitches
 
-- Acolyte shoes overlay
 - Cloak shoulders
 - Selections in Android aren't popping over
 
