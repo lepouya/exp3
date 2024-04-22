@@ -1,6 +1,5 @@
 ## TODO
 
-- Update Ionic and Capacitor
 - App and Fav Icons
   - https://capacitorjs.com/docs/android/configuration
 - Turn image composition into an npm lib
@@ -20,6 +19,7 @@
 
 - Acolyte shoes overlay
 - Cloak shoulders
+- Selections in Android aren't popping over
 
 # Stable Diffusion
 

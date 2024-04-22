@@ -31,6 +31,7 @@ export default function AnimeTab() {
               <IonSelect
                 interface="popover"
                 label={Format.word(type, { capitalize: true })}
+                labelPlacement="stacked"
                 value={char[type] || ""}
                 onIonChange={(e) =>
                   setChar((char) => ({ ...char, [type]: e.detail.value }))
