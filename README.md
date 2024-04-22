@@ -7,6 +7,7 @@
 - Fix Grids on Android
 - Inline the selections for anime tab
 - Tabs should keep the debug flag
+- Add the other icons I like
 
 ## Things to experiment with
 

@@ -16,7 +16,7 @@
           "0": "plain:#D3D3D3"
         },
         "icon": {
-          "9": "rank/rank-E-icon.png"
+          "9": "rpg/rank/rank-E-icon.png"
         }
       }
     },
@@ -26,7 +26,7 @@
           "0": "plain:#FFFFFF"
         },
         "icon": {
-          "9": "rank/rank-D-icon.png"
+          "9": "rpg/rank/rank-D-icon.png"
         }
       }
     },
@@ -36,7 +36,7 @@
           "0": "plain:#90EE90"
         },
         "icon": {
-          "9": "rank/rank-C-icon.png"
+          "9": "rpg/rank/rank-C-icon.png"
         }
       }
     },
@@ -46,7 +46,7 @@
           "0": "plain:#ADD8E6"
         },
         "icon": {
-          "9": "rank/rank-B-icon.png"
+          "9": "rpg/rank/rank-B-icon.png"
         }
       }
     },
@@ -56,7 +56,7 @@
           "0": "plain:#DA70D6"
         },
         "icon": {
-          "9": "rank/rank-A-icon.png"
+          "9": "rpg/rank/rank-A-icon.png"
         }
       }
     },
@@ -66,7 +66,7 @@
           "0": "plain:#FFD700"
         },
         "icon": {
-          "9": "rank/rank-S-icon.png"
+          "9": "rpg/rank/rank-S-icon.png"
         }
       }
     }
@@ -75,40 +75,40 @@
     "Jeff": {
       "images": {
         "main": {
-          "2": "character/char-000-02.png",
-          "5": "character/char-000-05.png"
+          "2": "rpg/character/char-000-02.png",
+          "5": "rpg/character/char-000-05.png"
         }
       }
     },
     "Serena": {
       "images": {
         "main": {
-          "2": "character/char-001-02.png",
-          "5": "character/char-001-05.png"
+          "2": "rpg/character/char-001-02.png",
+          "5": "rpg/character/char-001-05.png"
         }
       }
     },
     "Chad": {
       "images": {
         "main": {
-          "2": "character/char-002-02.png",
-          "5": "character/char-002-05.png"
+          "2": "rpg/character/char-002-02.png",
+          "5": "rpg/character/char-002-05.png"
         }
       }
     },
     "Mélina": {
       "images": {
         "main": {
-          "2": "character/char-003-02.png",
-          "5": "character/char-003-05.png"
+          "2": "rpg/character/char-003-02.png",
+          "5": "rpg/character/char-003-05.png"
         }
       }
     },
     "Skår": {
       "images": {
         "main": {
-          "2": "character/char-004-02.png",
-          "5": "character/char-004-05.png"
+          "2": "rpg/character/char-004-02.png",
+          "5": "rpg/character/char-004-05.png"
         }
       }
     }
@@ -117,32 +117,32 @@
     "Tattered Rags": {
       "images": {
         "main": {
-          "1": "body/body-001-01.png",
-          "3": "body/body-001-03.png"
+          "1": "rpg/body/body-001-01.png",
+          "3": "rpg/body/body-001-03.png"
         }
       }
     },
     "Leather Tights": {
       "images": {
         "main": {
-          "1": "body/body-002-01.png",
-          "3": "body/body-002-03.png"
+          "1": "rpg/body/body-002-01.png",
+          "3": "rpg/body/body-002-03.png"
         }
       }
     },
     "Acolyte Robe": {
       "images": {
         "main": {
-          "1": "body/body-003-01.png",
-          "3": "body/body-003-03.png"
+          "1": "rpg/body/body-003-01.png",
+          "3": "rpg/body/body-003-03.png"
         }
       }
     },
     "Emerald Platemail": {
       "images": {
         "main": {
-          "1": "body/body-004-01.png",
-          "3": "body/body-004-03.png"
+          "1": "rpg/body/body-004-01.png",
+          "3": "rpg/body/body-004-03.png"
         }
       }
     }
@@ -151,32 +151,32 @@
     "Bandaged Arms": {
       "images": {
         "main": {
-          "1": "hand/hand-001-01.png",
-          "3": "hand/hand-001-03.png"
+          "1": "rpg/hand/hand-001-01.png",
+          "3": "rpg/hand/hand-001-03.png"
         }
       }
     },
     "Leather Gloves": {
       "images": {
         "main": {
-          "1": "hand/hand-002-01.png",
-          "3": "hand/hand-002-03.png"
+          "1": "rpg/hand/hand-002-01.png",
+          "3": "rpg/hand/hand-002-03.png"
         }
       }
     },
     "Acolyte Gloves": {
       "images": {
         "main": {
-          "1": "hand/hand-003-01.png",
-          "3": "hand/hand-003-03.png"
+          "1": "rpg/hand/hand-003-01.png",
+          "3": "rpg/hand/hand-003-03.png"
         }
       }
     },
     "Emerald Gauntlets": {
       "images": {
         "main": {
-          "1": "hand/hand-004-01.png",
-          "3": "hand/hand-004-03.png"
+          "1": "rpg/hand/hand-004-01.png",
+          "3": "rpg/hand/hand-004-03.png"
         }
       }
     }
@@ -185,32 +185,32 @@
     "Bandaged Feet": {
       "images": {
         "main": {
-          "1": "feet/feet-001-01.png",
-          "3": "feet/feet-001-03.png"
+          "1": "rpg/feet/feet-001-01.png",
+          "3": "rpg/feet/feet-001-03.png"
         }
       }
     },
     "Leather Boots": {
       "images": {
         "main": {
-          "1": "feet/feet-002-01.png",
-          "3": "feet/feet-002-03.png"
+          "1": "rpg/feet/feet-002-01.png",
+          "3": "rpg/feet/feet-002-03.png"
         }
       }
     },
     "Acolyte Shoes": {
       "images": {
         "main": {
-          "1": "feet/feet-003-01.png",
-          "3": "feet/feet-003-03.png"
+          "1": "rpg/feet/feet-003-01.png",
+          "3": "rpg/feet/feet-003-03.png"
         }
       }
     },
     "Emerald Greaves": {
       "images": {
         "main": {
-          "1": "feet/feet-004-01.png",
-          "3": "feet/feet-004-03.png"
+          "1": "rpg/feet/feet-004-01.png",
+          "3": "rpg/feet/feet-004-03.png"
         }
       }
     }
@@ -219,32 +219,32 @@
     "Bandaged Head": {
       "images": {
         "main": {
-          "1": "head/head-001-01.png",
-          "6": "head/head-001-06.png"
+          "1": "rpg/head/head-001-01.png",
+          "6": "rpg/head/head-001-06.png"
         }
       }
     },
     "Leather Cap": {
       "images": {
         "main": {
-          "1": "head/head-002-01.png",
-          "6": "head/head-002-06.png"
+          "1": "rpg/head/head-002-01.png",
+          "6": "rpg/head/head-002-06.png"
         }
       }
     },
     "Acolyte Hat": {
       "images": {
         "main": {
-          "1": "head/head-003-01.png",
-          "6": "head/head-003-06.png"
+          "1": "rpg/head/head-003-01.png",
+          "6": "rpg/head/head-003-06.png"
         }
       }
     },
     "Emerald Helmet": {
       "images": {
         "main": {
-          "1": "head/head-004-01.png",
-          "6": "head/head-004-06.png"
+          "1": "rpg/head/head-004-01.png",
+          "6": "rpg/head/head-004-06.png"
         }
       }
     }
@@ -253,32 +253,32 @@
     "Steel Sword": {
       "images": {
         "main": {
-          "1": "weapon/weapon-001-01.png",
-          "6": "weapon/weapon-001-06.png"
+          "1": "rpg/weapon/weapon-001-01.png",
+          "6": "rpg/weapon/weapon-001-06.png"
         }
       }
     },
     "Acolyte Wand": {
       "images": {
         "main": {
-          "1": "weapon/weapon-002-01.png",
-          "6": "weapon/weapon-002-06.png"
+          "1": "rpg/weapon/weapon-002-01.png",
+          "6": "rpg/weapon/weapon-002-06.png"
         }
       }
     },
     "Yew Shortbow": {
       "images": {
         "main": {
-          "1": "weapon/weapon-003-01.png",
-          "6": "weapon/weapon-003-06.png"
+          "1": "rpg/weapon/weapon-003-01.png",
+          "6": "rpg/weapon/weapon-003-06.png"
         }
       }
     },
     "Wizard Staff": {
       "images": {
         "main": {
-          "1": "weapon/weapon-004-01.png",
-          "6": "weapon/weapon-004-06.png"
+          "1": "rpg/weapon/weapon-004-01.png",
+          "6": "rpg/weapon/weapon-004-06.png"
         }
       }
     }
@@ -287,24 +287,24 @@
     "Steak Knife": {
       "images": {
         "main": {
-          "1": "offhand/offhand-001-01.png",
-          "6": "offhand/offhand-001-06.png"
+          "1": "rpg/offhand/offhand-001-01.png",
+          "6": "rpg/offhand/offhand-001-06.png"
         }
       }
     },
     "Peace Flower": {
       "images": {
         "main": {
-          "1": "offhand/offhand-002-01.png",
-          "6": "offhand/offhand-002-06.png"
+          "1": "rpg/offhand/offhand-002-01.png",
+          "6": "rpg/offhand/offhand-002-06.png"
         }
       }
     },
     "Teddy Bear": {
       "images": {
         "main": {
-          "1": "offhand/offhand-003-01.png",
-          "6": "offhand/offhand-003-06.png"
+          "1": "rpg/offhand/offhand-003-01.png",
+          "6": "rpg/offhand/offhand-003-06.png"
         }
       }
     }
@@ -313,16 +313,16 @@
     "Tattered Cloak": {
       "images": {
         "main": {
-          "1": "cloak/cloak-001-01.png",
-          "5": "cloak/cloak-001-05.png"
+          "1": "rpg/cloak/cloak-001-01.png",
+          "5": "rpg/cloak/cloak-001-05.png"
         }
       }
     },
     "Red Cloak": {
       "images": {
         "main": {
-          "1": "cloak/cloak-002-01.png",
-          "5": "cloak/cloak-002-05.png"
+          "1": "rpg/cloak/cloak-002-01.png",
+          "5": "rpg/cloak/cloak-002-05.png"
         }
       }
     }
@@ -331,21 +331,21 @@
     "Choker": {
       "images": {
         "main": {
-          "6": "amulet/amulet-001-06.png"
+          "6": "rpg/amulet/amulet-001-06.png"
         }
       }
     },
     "Key Pendant": {
       "images": {
         "main": {
-          "6": "amulet/amulet-002-06.png"
+          "6": "rpg/amulet/amulet-002-06.png"
         }
       }
     },
     "Magic Amulet": {
       "images": {
         "main": {
-          "6": "amulet/amulet-003-06.png"
+          "6": "rpg/amulet/amulet-003-06.png"
         }
       }
     }
@@ -354,14 +354,14 @@
     "Eye Patch": {
       "images": {
         "main": {
-          "5": "extra/extra-001-05.png"
+          "5": "rpg/extra/extra-001-05.png"
         }
       }
     },
     "Pixie Companion": {
       "images": {
         "main": {
-          "5": "extra/extra-002-05.png"
+          "5": "rpg/extra/extra-002-05.png"
         }
       }
     }

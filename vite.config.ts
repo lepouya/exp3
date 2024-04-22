@@ -5,6 +5,13 @@ import react from "@vitejs/plugin-react";
 
 import pkg from "./package.json";
 
+const externals = {
+  capacitor: /node_modules\/@capacitor/,
+  ionic: /node_modules\/@ionic/,
+  ionicons: /node_modules\/ionicons/,
+  react: /node_modules\/(react|scheduler)/,
+};
+
 export default defineConfig({
   plugins: [react(), legacy()],
   define: {
@@ -16,6 +23,20 @@ export default defineConfig({
           JSON.stringify(v),
         ]),
     ),
+  },
+  build: {
+    chunkSizeWarningLimit: 1024,
+    rollupOptions: {
+      output: {
+        manualChunks: function (id) {
+          for (let [name, regex] of Object.entries(externals)) {
+            if (regex.test(id)) {
+              return name;
+            }
+          }
+        },
+      },
+    },
   },
   test: {
     globals: true,

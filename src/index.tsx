@@ -47,7 +47,7 @@ window.addEventListener(
   "load",
   async () => {
     await Game.Database.initialize();
-    await RPG.loadItems("/items.json");
+    await RPG.loadItems("/rpg/items.json");
     AnimeTab.init();
     DerivativesTab.init();
     GridTab.init();
