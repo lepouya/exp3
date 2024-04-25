@@ -1,4 +1,3 @@
-import { gridOutline } from "ionicons/icons";
 import React from "react";
 
 import { IonItem, IonLabel, IonList } from "@ionic/react";
@@ -39,7 +38,7 @@ GridTab.init = () => {
   Game.Tab.register({
     path: "grids",
     content: <GridTab />,
-    icon: gridOutline,
+    icon: "gridOutline",
     label: "Grids",
     title: "Grids Test",
   });

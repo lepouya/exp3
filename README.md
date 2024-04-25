@@ -30,7 +30,7 @@
 
 ## Generation
 
-- AnimaPencilXL 3.0.0 + AddDetailXL @ 1
+- AnimaPencilXL 3.0.0 + HyperSDXL-4step @ 1
 - DPM++ SDE Karras, 4 its, 5 steps, cfg 2.0
 
 ## Control
@@ -40,5 +40,5 @@
 
 ## Prompts
 
-- Pos: <SK_ANIME><ZIP2D> a full body front shot drawing of a man standing.
+- Pos: <SK_ANIME><ZIP2D> a full body front shot drawing of a man standing. neutral background.
 - Neg: <ac_neg1><ac_neg2><zip2d_neg> shadow. nsfw. nudity. reflection

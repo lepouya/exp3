@@ -1,5 +1,3 @@
-import { calculatorOutline } from "ionicons/icons";
-
 import {
   IonCard,
   IonCardContent,
@@ -42,7 +40,7 @@ DerivativesTab.init = () => {
   Game.Tab.register({
     path: "derivatives",
     content: <DerivativesTab />,
-    icon: calculatorOutline,
+    icon: "calculatorOutline",
     label: "d/dx",
     title: "Derivatives",
   });

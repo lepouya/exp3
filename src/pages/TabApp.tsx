@@ -3,7 +3,6 @@ import { Redirect, Route } from "react-router-dom";
 import {
   IonContent,
   IonHeader,
-  IonIcon,
   IonLabel,
   IonPage,
   IonRouterOutlet,
@@ -15,6 +14,7 @@ import {
 } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 
+import Icon from "../components/Icon";
 import Game from "../model/Game";
 
 export default function TabApp() {
@@ -52,7 +52,7 @@ export default function TabApp() {
                   href={`/${tab.path}`}
                   key={`tab-button-${tab.path}`}
                 >
-                  {tab.icon && <IonIcon aria-hidden="true" icon={tab.icon} />}
+                  {tab.icon && <Icon aria-hidden="true" icon={tab.icon} />}
                   {tab.label && <IonLabel>{tab.label}</IonLabel>}
                 </IonTabButton>
               ),

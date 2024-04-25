@@ -1,4 +1,3 @@
-import { gameControllerOutline } from "ionicons/icons";
 import React from "react";
 
 import {
@@ -83,7 +82,7 @@ AnimeTab.init = () => {
   Game.Tab.register({
     path: "anime",
     content: <AnimeTab />,
-    icon: gameControllerOutline,
+    icon: "gameControllerOutline",
     label: "Anime",
     title: "Anime Character Creation",
     from: "/",

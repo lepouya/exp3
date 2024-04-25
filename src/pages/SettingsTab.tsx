@@ -1,5 +1,4 @@
 import { createBrowserHistory } from "history";
-import { settingsOutline } from "ionicons/icons";
 import React from "react";
 
 import {
@@ -43,7 +42,7 @@ SettingsTab.init = () => {
   Game.Tab.register({
     path: "settings",
     content: <SettingsTab />,
-    icon: settingsOutline,
+    icon: "settingsOutline",
     label: "Settings",
     title: "Game Settings",
   });
