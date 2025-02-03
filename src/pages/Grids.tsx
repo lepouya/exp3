@@ -3,7 +3,7 @@ import React from "react";
 import { IonItem, IonLabel, IonList } from "@ionic/react";
 
 import Grid from "../components/Grid";
-import Game from "../model/Game";
+import TabApp from "../components/TabApp";
 
 export default function GridTab() {
   return (
@@ -35,7 +35,7 @@ export default function GridTab() {
 }
 
 GridTab.init = () => {
-  Game.Tab.register({
+  TabApp.register({
     path: "grids",
     content: <GridTab />,
     icon: "gridOutline",

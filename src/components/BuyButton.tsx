@@ -1,28 +1,29 @@
-import React, { MouseEvent } from "react";
+import Decimal, { DecimalSource } from "break_eternity.js";
+import React from "react";
 
 import { IonButton, IonChip } from "@ionic/react";
 
-import Game from "../model/Game";
-import Resource, { ResourceCount, ResourceManager } from "../model/Resource";
-import Format from "../utils/format";
+import Resource, { ResourceCount } from "../model/Resource";
+import State from "../model/State";
+import className from "../utils/className";
 import Icon from "./Icon";
 
 export type BuyButtonProps = {
-  resource: string | Resource;
+  resource?: Partial<Resource> | string;
+
   enabled?: boolean;
   allowUnlocking?: boolean;
+  mode?: "buy" | "sell";
 
   maxNum?: number;
   minNum?: number;
   increment?: number;
   precision?: number;
+  buyAmount?: string;
 
-  gainFactor?: number;
-  costFactor?: number;
-  mode?: "buy" | "sell";
-
-  overrideCount?: number | string;
-  overrideBuyAmount?: string;
+  gainFactor?: DecimalSource;
+  costFactor?: DecimalSource;
+  countOverride?: DecimalSource;
 
   prefix?: string;
   suffix?: string;
@@ -37,56 +38,25 @@ export type BuyButtonProps = {
 
   className?: string;
   style?: React.CSSProperties;
+  debug?: boolean;
 
-  onPurchase?: (resource: Resource, bought: number) => void;
+  onPurchase?: (resource: Resource, bought: DecimalSource) => void;
 };
 
-export default function BuyButton({
-  resource,
-  enabled = true,
-  allowUnlocking = false,
-
-  maxNum,
-  minNum,
-  increment,
-  precision = 0,
-
-  gainFactor = 1,
-  costFactor = 1,
-  mode = "buy",
-
-  overrideCount,
-  overrideBuyAmount,
-
-  prefix = "Buy",
-  suffix = "",
-  infix = "for",
-  and = "&",
-
-  shape,
-  fill,
-  size,
-  color,
-  expand,
-
-  className,
-  style,
-  onPurchase,
-}: BuyButtonProps) {
-  const rm = Game.useResourceManager();
-  const res = rm.resolve(resource);
+export default function BuyButton(props: BuyButtonProps) {
+  const resource = Resource.useHook(props.resource);
   const buyAmount =
-    buyAmounts[
-      overrideBuyAmount ?? ResourceManager.singleton.globalBuyAmount ?? "+1"
-    ] ?? buyAmounts["+1"];
+    buyAmounts[props.buyAmount ?? Resource.globalSettings.buyAmount ?? "+1"] ??
+    buyAmounts["+1"];
   const amount = {
-    minAmount: minNum ?? buyAmount.min,
-    maxAmount: maxNum ?? buyAmount.max,
-    increments: increment ?? buyAmount.inc,
+    minAmount: props.minNum ?? buyAmount.min,
+    maxAmount: props.maxNum ?? buyAmount.max,
+    increments: props.increment ?? buyAmount.inc,
   };
+  let enabled = props.enabled ?? true;
 
-  if (!(res.unlocked ?? true)) {
-    if (allowUnlocking) {
+  if (resource.locked) {
+    if (props.allowUnlocking) {
       amount.minAmount = amount.maxAmount = amount.increments = 1;
     } else {
       amount.minAmount = amount.maxAmount = amount.increments = 0;
@@ -94,23 +64,22 @@ export default function BuyButton({
     }
   }
 
-  function renderResourceCounts(rcs: ResourceCount[], Factor = 1) {
+  function renderResourceCounts(rcs: ResourceCount[], factor = 1) {
     return rcs.map(({ resource, count }, i) => {
-      resource = ResourceManager.get(resource);
-      const res = Format.resource(resource, {
-        override: { count: count * Factor },
-        prec: precision,
+      const res = Resource.get(resource).format({
+        override: { count: Decimal.mul(count, factor) },
+        prec: props.precision ?? 0,
         alwaysShowSign: true,
       });
       return (
         <React.Fragment key={res.name}>
-          {i > 0 && <div className="prefix">{and}</div>}
+          {i > 0 && <div className="prefix">{props.and ?? " & "}</div>}
           <IonChip
             color={chipColor[res.valueSign ?? "zero"]}
             style={{ textTransform: "none" }}
           >
             {res.value?.replace(/[+-]/g, "")}{" "}
-            {res.icon && <Icon icon={res.icon} size="small" />}
+            {res.icon && <Icon icon={res.icon} size="1ex" />}
             {res.name}
           </IonChip>
         </React.Fragment>
@@ -118,62 +87,82 @@ export default function BuyButton({
     });
   }
 
-  function doPurchase(amount: number, event: MouseEvent) {
+  function doPurchase(amount: DecimalSource, event: React.UIEvent) {
     event.preventDefault();
-    if (!enabled || amount === 0) {
+    if (!enabled || Decimal.eq(amount, 0)) {
       return;
     }
 
-    const bought = res.buy(
+    const bought = resource.buy(
       amount,
       "partial",
-      false,
-      gainFactor,
-      costFactor,
-      overrideCount,
+      props.gainFactor,
+      props.costFactor,
+      props.countOverride,
     );
 
-    if (onPurchase && bought.gain.length > 0) {
-      onPurchase(res, bought.gain[0].count);
+    if (props.onPurchase && bought.gain.length > 0) {
+      props.onPurchase(resource, bought.gain[0].count);
     }
   }
 
   const tx =
-    mode === "buy"
-      ? res.buy(amount, "partial", true, gainFactor, costFactor, overrideCount)
-      : res.sell(amount, "full", true, 1, costFactor, overrideCount);
-  const active = ResourceManager.canAfford(tx.cost);
-  const hasGain = tx.gain.some(({ count }) => count !== 0);
-  const hasCost = tx.cost.some(({ count }) => count !== 0);
-  const classNames = [className, "buy-button", active ? null : "inactive"];
+    props.mode === "sell"
+      ? resource.sell(
+          amount,
+          "dry-full",
+          1,
+          props.costFactor,
+          props.countOverride,
+        )
+      : resource.buy(
+          amount,
+          "dry-partial",
+          props.gainFactor,
+          props.costFactor,
+          props.countOverride,
+        );
+  const active = Resource.canAfford(tx.cost);
+  const hasGain = tx.gain.some(({ count }) => Decimal.neq(count, 0));
+  const hasCost = tx.cost.some(({ count }) => Decimal.neq(count, 0));
+  const classNames = [props.className, "buy-button", active || "inactive"];
+  const prefix = props.prefix ?? "Buy";
+  const suffix = props.suffix ?? "";
+  const infix = props.infix ?? "for";
 
-  if (!hasGain) {
+  if (!hasGain && !props.debug) {
     return null;
   }
+
   return (
     <IonButton
       onClick={(e) => doPurchase(active && enabled ? tx.count : 0, e)}
       disabled={!active || !enabled}
-      className={classNames.filter(Boolean).join(" ")}
-      style={style}
-      id={`button-buy-${res.name}`}
-      shape={shape === "round" ? "round" : undefined}
-      fill={fill}
-      size={size}
-      color={color}
-      expand={expand}
+      className={className(classNames)}
+      style={props.style}
+      id={`button-buy-${resource.name}`}
+      shape={props.shape === "round" ? "round" : undefined}
+      fill={props.fill}
+      size={props.size}
+      color={props.color}
+      expand={props.expand}
     >
       {prefix && <div className="prefix">{prefix}</div>}
       {renderResourceCounts(tx.gain)}
       {hasCost && enabled && infix && <div className="infix">{infix}</div>}
       {hasCost && enabled && renderResourceCounts(tx.cost, -1)}
       {suffix && <div className="suffix">{suffix}</div>}
+      {props.debug && (
+        <div className="full debug">
+          {JSON.stringify(tx, (k, v) => (k === "resource" ? v.name : v), 2)}
+        </div>
+      )}
     </IonButton>
   );
 }
 
 BuyButton.BuyAmountButtons = () => {
-  const rm = Game.useResourceManager();
+  const state = State.useHook();
   return (
     <>
       {Object.keys(buyAmounts)
@@ -181,14 +170,14 @@ BuyButton.BuyAmountButtons = () => {
         .map((value) => (
           <IonButton
             key={value}
-            fill={value === rm.globalBuyAmount ? "solid" : "outline"}
-            onClick={() => (rm.globalBuyAmount = value)}
+            fill={value === state.buyAmount ? "solid" : "outline"}
+            onClick={() => state.set({ buyAmount: value })}
             id={`button-${value.replace(/\W/g, "")}`}
-            style={{ height: "2.5em", width: "4em" }}
+            style={{ height: "2.5em", width: "5em" }}
             size="small"
           >
             {buyIcons[value[0]] && (
-              <Icon icon={buyIcons[value[0]]} size="small" />
+              <Icon icon={buyIcons[value[0]]} size="1ex" />
             )}
             {value.replace(/^[+x]/, "").toUpperCase()}
           </IonButton>
@@ -199,18 +188,18 @@ BuyButton.BuyAmountButtons = () => {
 
 export type BuyAllButtonProps = {
   resources?: Record<string, number | undefined> | Array<Resource | string>;
+
   enabled?: boolean;
   showNames?: boolean;
 
   maxNum?: number;
   minNum?: number;
   increment?: number;
-
-  overrideCount?: number | string;
-  overrideBuyAmount?: string;
+  buyAmount?: string;
 
   gainFactor?: number;
   costFactor?: number;
+  countOverride?: number | string;
 
   prefix?: string;
   infix?: string;
@@ -230,99 +219,77 @@ export type BuyAllButtonProps = {
   onPurchase?: (rc: ResourceCount[]) => void;
 };
 
-BuyButton.BuyAllButton = ({
-  resources = {},
-  enabled = true,
-  showNames = true,
-
-  maxNum,
-  minNum,
-  increment,
-
-  overrideCount,
-  overrideBuyAmount,
-
-  gainFactor = 1,
-  costFactor = 1,
-
-  prefix = "Buy",
-  suffix = "",
-  infix = "of",
-  and = " & ",
-  all = "all",
-
-  shape,
-  fill,
-  size,
-  color,
-  expand,
-
-  className,
-  style,
-  onPurchase,
-}: BuyAllButtonProps) => {
-  const buyAmount =
-    overrideBuyAmount || ResourceManager.singleton.globalBuyAmount || "+1";
+BuyButton.BuyAllButton = (props: BuyAllButtonProps) => {
+  const buyAmount = props.buyAmount ?? State.global.buyAmount ?? "+1";
   const predefAmounts = buyAmounts[buyAmount] ?? buyAmounts["+1"];
   const amount = {
-    minAmount: minNum ?? predefAmounts.min,
-    maxAmount: maxNum ?? predefAmounts.max,
-    increments: increment ?? predefAmounts.inc,
+    minAmount: props.minNum ?? predefAmounts.min,
+    maxAmount: props.maxNum ?? predefAmounts.max,
+    increments: props.increment ?? predefAmounts.inc,
   };
 
-  let names = all;
-  const limits = Array.isArray(resources) ? resources : Object.keys(resources);
-  if (showNames && limits.length > 0) {
-    names = limits
-      .map((res) => ResourceManager.get(res))
-      .map((res) => res.singularName ?? res.pluralName ?? res.name)
-      .filter((name) => !!name)
-      .join(and);
+  const resources = Array.isArray(props.resources)
+    ? Object.fromEntries(
+        props.resources.map((n) => [
+          typeof n === "string" ? n : n.name,
+          undefined,
+        ]),
+      )
+    : props.resources || {};
+  const enabled =
+    (props.enabled ?? true) && Object.values(resources).length > 0;
+
+  let names = props.all ?? "all";
+  if (props.showNames) {
+    names =
+      Object.keys(resources)
+        .map((res) => Resource.get(res))
+        .map((res) => res.singularName ?? res.pluralName ?? res.name)
+        .filter((name) => !!name)
+        .join(props.and ?? " & ") || names;
   }
 
-  function doPurchase(event: MouseEvent) {
+  function doPurchase(event: React.UIEvent) {
     event.preventDefault();
     if (!enabled) {
       return;
     }
 
-    if (Array.isArray(resources)) {
-      resources = Object.fromEntries(
-        resources.map((n) => [typeof n === "string" ? n : n.name, undefined]),
-      );
-    }
-
-    const bought = ResourceManager.purchaseAll(
+    const bought = Resource.purchaseAll(
       resources,
       amount,
       "partial",
-      false,
-      gainFactor,
-      costFactor,
-      overrideCount,
+      props.gainFactor,
+      props.costFactor,
+      props.countOverride,
     );
 
-    if (onPurchase && bought.gain.length > 0) {
-      onPurchase(bought.gain);
+    if (props.onPurchase && bought.gain.length > 0) {
+      props.onPurchase(bought.gain);
     }
   }
+
+  const classNames = [props.className, "buy-all-button"];
+  const prefix = props.prefix ?? "Buy";
+  const suffix = props.suffix ?? "";
+  const infix = props.infix ?? "of";
 
   return (
     <IonButton
       onClick={doPurchase}
       disabled={!enabled}
-      className={["buy-all-button", className].filter(Boolean).join(" ")}
-      style={style}
-      shape={shape === "round" ? "round" : undefined}
-      fill={fill}
-      size={size}
-      color={color}
-      expand={expand}
+      className={className(classNames)}
+      style={props.style}
+      shape={props.shape === "round" ? "round" : undefined}
+      fill={props.fill}
+      size={props.size}
+      color={props.color}
+      expand={props.expand}
     >
       {prefix && <div className="prefix">{prefix}</div>}
       <IonChip color={chipColor["positive"]} style={{ textTransform: "none" }}>
         {buyIcons[buyAmount[0]] && (
-          <Icon icon={buyIcons[buyAmount[0]]} size="small" />
+          <Icon icon={buyIcons[buyAmount[0]]} size="1ex" />
         )}
         {buyAmount.replace(/^[+x]/, "").toUpperCase()}
         {enabled && names && (infix ? ` ${infix}` : "") + " " + names}

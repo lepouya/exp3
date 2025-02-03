@@ -36,7 +36,7 @@
 ## Control
 
 - t2i-adapter-openpose-sdxl @ 1 (0-100)
-- t2i-adapter-canny-sdxl @ 1 (25-75) only handls, feet, shoulders, top of head, and hips
+- t2i-adapter-canny-sdxl @ 1 (25-75) only hands, feet, shoulders, top of head, and hips
 
 ## Prompts
 

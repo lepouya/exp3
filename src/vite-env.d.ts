@@ -7,3 +7,8 @@ declare module "react" {
     [key: `--${string}`]: string | number | boolean | undefined;
   }
 }
+
+declare module "*.svg" {
+  const content: string;
+  export default content;
+}

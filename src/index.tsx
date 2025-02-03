@@ -15,18 +15,13 @@ import "@ionic/react/css/palettes/dark.system.css";
 /* Theme variables */
 import "./theme.css";
 
-import React from "react";
+import React, { ComponentType } from "react";
 import { createRoot } from "react-dom/client";
 
 import { IonApp, IonLoading, setupIonicReact } from "@ionic/react";
 
-import Game from "./model/Game";
-import RPG from "./model/RPG";
-import AnimeTab from "./pages/AnimeTab";
-import DerivativesTab from "./pages/DerivativesTab";
-import GridTab from "./pages/Grids";
-import SettingsTab from "./pages/SettingsTab";
-import TabApp from "./pages/TabApp";
+import AppEvents from "./components/AppEvents";
+import TabApp from "./components/TabApp";
 
 setupIonicReact();
 
@@ -46,20 +41,14 @@ root.render(
 window.addEventListener(
   "load",
   async () => {
-    await Game.Database.initialize();
-    await RPG.loadItems("/rpg/items.json");
-    AnimeTab.init();
-    DerivativesTab.init();
-    GridTab.init();
-    SettingsTab.init();
-    await Game.ResourceManager.load();
-
+    await AppEvents.initialize();
+    const IonApp_FIXED = IonApp as ComponentType<any>;
     root.render(
       <React.StrictMode>
-        <IonApp>
-          <Game />
+        <IonApp_FIXED>
+          <AppEvents />
           <TabApp />
-        </IonApp>
+        </IonApp_FIXED>
       </React.StrictMode>,
     );
   },

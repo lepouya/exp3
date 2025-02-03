@@ -12,20 +12,20 @@ import {
 
 import BuyButton from "../components/BuyButton";
 import Icon from "../components/Icon";
-import Game from "../model/Game";
-import Resource, { ResourceManager } from "../model/Resource";
-import Format from "../utils/format";
+import TabApp from "../components/TabApp";
+import Resource from "../model/Resource";
+import shortcut from "../utils/shortcut";
 
 export default function DerivativesTab() {
-  const rm = Game.useResourceManager();
-  const [main, ...rest] = [...Array(11)].map((_, i) => rm.resolve(`x_${i}`));
-  if (!rm || !main || !rest.length) {
+  const main = Resource.useHook("x_0");
+  const rest = Resource.useHooks([...Array(10)].map((_, i) => `x_${i + 1}`));
+  if (!main || !rest.length) {
     return null;
   }
 
   return (
     <IonGrid>
-      {rest[0].count > 10 && rest[1].count > 1 && <RenderBuyMulti />}
+      {rest[0].count.gt(10) && rest[1].count.gt(1) && <RenderBuyMulti />}
       <RenderTitle resource={main} rest={rest} />
       {rest.map((res) => (
         <RenderDerivative key={res.name} resource={res} />
@@ -36,8 +36,8 @@ export default function DerivativesTab() {
 
 DerivativesTab.init = () => {
   genDerivatives("x", 10);
-  Game.ShortCut.register("x", buyAllDerivatives);
-  Game.Tab.register({
+  shortcut.register("x", buyAllDerivatives);
+  TabApp.register({
     path: "derivatives",
     content: <DerivativesTab />,
     icon: "calculatorOutline",
@@ -56,18 +56,15 @@ function genDerivatives(name = "x", cnt = 0) {
       "",
     );
     res.push(
-      ResourceManager.upsert({
+      Resource.upsert({
         name: `${name}_${d}`,
         singularName: d ? `d${dSuper}/dt${dSuper} . ${name}` : name,
         priority: d,
 
-        count: 0,
+        count: Resource.decimal(0),
         extra: { base: 0 },
-        value(this: Resource) {
-          return this.count;
-        },
 
-        unlocked: d === 0,
+        locked: d !== 0,
         autoUnlock: true,
         unlockCost() {
           return [
@@ -76,7 +73,7 @@ function genDerivatives(name = "x", cnt = 0) {
           ];
         },
 
-        cost(n) {
+        purchaseCost(n) {
           if (!d) {
             return [];
           }
@@ -86,7 +83,9 @@ function genDerivatives(name = "x", cnt = 0) {
               count:
                 10 **
                 Math.floor(
-                  Math.floor((n - 1) / 10 + 1) * (Math.floor(d ** 1.5) + 1) - 1,
+                  Math.floor((Resource.number(n) - 1) / 10 + 1) *
+                    (Math.floor(d ** 1.5) + 1) -
+                    1,
                 ),
             },
           ];
@@ -94,7 +93,8 @@ function genDerivatives(name = "x", cnt = 0) {
 
         onPurchase(this: Resource, purchase) {
           if (purchase.style !== "free") {
-            this.extra.base = (this.extra.base ?? 0) + purchase.count;
+            this.extra.base =
+              (this.extra.base ?? 0) + Resource.number(purchase.count);
             if (d > 0) {
               this.extra.factor = Math.round(
                 2 ** Math.floor(this.extra.base / 10),
@@ -103,11 +103,11 @@ function genDerivatives(name = "x", cnt = 0) {
           }
         },
 
-        tick(this: Resource, dt) {
+        onTick(this: Resource, dt) {
           if (d > 0) {
-            this.manager
-              .resolve(`${name}_${d - 1}`)
-              .add(this.count * (this.extra.factor ?? 0) * (0.1 * dt));
+            Resource.get(`${name}_${d - 1}`).award(
+              this.count.mul(this.extra.factor ?? 0).mul(0.1 * dt),
+            );
           }
         },
       }),
@@ -118,7 +118,7 @@ function genDerivatives(name = "x", cnt = 0) {
 }
 
 function RenderTitle(props: { resource: Resource; rest: Resource[] }) {
-  const fmt = Format.resource(props.resource);
+  const fmt = props.resource.format();
 
   return (
     <IonCard>
@@ -152,11 +152,11 @@ function RenderTitle(props: { resource: Resource; rest: Resource[] }) {
       </IonCardHeader>
       <IonCardContent>
         <IonCol size="12" className="ion-text-center">
-          {props.rest[0].count > 10 && props.rest[1].count > 1 ? (
+          {props.rest[0].count.gt(10) && props.rest[1].count.gt(1) ? (
             <BuyButton.BuyAllButton
               resources={props.rest}
               showNames={false}
-              overrideCount="base"
+              countOverride="base"
               all={`all ${fmt.name}'s`}
               fill="outline"
               style={{ width: "100%" }}
@@ -164,7 +164,7 @@ function RenderTitle(props: { resource: Resource; rest: Resource[] }) {
           ) : (
             <BuyButton
               resource={props.resource}
-              overrideBuyAmount="+1"
+              buyAmount="+1"
               prefix="Add"
               fill="outline"
               style={{ width: "100%" }}
@@ -177,14 +177,17 @@ function RenderTitle(props: { resource: Resource; rest: Resource[] }) {
 }
 
 function RenderDerivative(props: { resource: Resource }) {
-  if (!(props.resource.unlocked ?? true) || props.resource.disabled) {
+  if (props.resource.locked || props.resource.disabled) {
     return null;
   }
 
-  const fmt = Format.resource(props.resource);
+  const fmt = props.resource.format();
   if (fmt.active !== "active") {
     return <div className="full">{fmt.active}</div>;
   }
+  // if (props.resource.name === "x_1") {
+  //   console.log(fmt, props.resource);
+  // }
 
   return (
     <IonCard>
@@ -231,7 +234,7 @@ function RenderDerivative(props: { resource: Resource }) {
           <IonCol size="12" className="ion-text-center">
             <BuyButton
               resource={props.resource}
-              overrideCount="base"
+              countOverride="base"
               fill="outline"
               style={{ width: "100%" }}
             />
@@ -266,18 +269,16 @@ function RenderBuyMulti() {
 }
 
 function buyAllDerivatives() {
-  const derivatives = [...Array(11)].map((_, i) =>
-    ResourceManager.get(`x_${i}`),
-  );
+  const derivatives = [...Array(11)].map((_, i) => Resource.get(`x_${i}`));
   const ress = Object.fromEntries(
     derivatives.slice(1).map((r) => [r.name, "base"]),
   );
-  ResourceManager.purchaseAll(ress, {
+  Resource.purchaseAll(ress, {
     minAmount: 1,
     maxAmount: 1000,
     increments: 10,
   });
-  ResourceManager.purchaseAll(ress, 10);
+  Resource.purchaseAll(ress, 10);
   return true;
 }
 

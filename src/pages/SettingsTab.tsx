@@ -1,57 +1,54 @@
 import { createBrowserHistory } from "history";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   IonButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonCheckbox,
   IonCol,
   IonGrid,
+  IonLabel,
   IonRange,
   IonRow,
   IonText,
   IonTextarea,
 } from "@ionic/react";
 
-import Game from "../model/Game";
-import { ResourceManager } from "../model/Resource";
-import { decode, encode } from "../utils/encoding";
-import Format from "../utils/format";
-import formatWithNotation from "../utils/notation";
+import TabApp from "../components/TabApp";
+import State from "../model/State";
+import { decode, encode } from "../utils/codec";
+import database from "../utils/database";
+import format from "../utils/format";
+import Notation from "../utils/notation";
 
 export default function SettingsTab() {
-  const debug = window.location.search.toLowerCase().includes("debug");
-
   return (
     <IonGrid>
-      <GameDataPanel />
+      <DataPanel />
       <NumberFormatPanel />
       <AdvancedPanel />
       <ResetPanel />
-      {debug && <DebugPanel />}
+      <DebugPanel />
     </IonGrid>
   );
-  // TODO: debug
 }
 
 SettingsTab.init = () => {
-  Game.Tab.register({
+  TabApp.register({
     path: "settings",
     content: <SettingsTab />,
     icon: "settingsOutline",
     label: "Settings",
-    title: "Game Settings",
+    title: "Settings",
   });
 };
 
-function GameDataPanel() {
-  const rm = Game.useResourceManager();
+function DataPanel() {
+  const state = State.useHook();
   const [textContents, setTextContents] = React.useState("");
-  const debug = window.location.search.toLowerCase().includes("debug");
 
   return (
     <IonCard>
@@ -59,7 +56,7 @@ function GameDataPanel() {
         <IonCardTitle>
           <IonRow>
             <IonCol size="12" className="ion-text-center">
-              <IonText>Game Data</IonText>
+              <IonText>Data</IonText>
             </IonCol>
           </IonRow>
         </IonCardTitle>
@@ -67,38 +64,34 @@ function GameDataPanel() {
       <IonCardContent>
         <IonRow>
           <IonCol size="12">
-            You started this game{" "}
-            {Format.time(rm.lastTick ?? 0, { epoch: rm.lastReset })}
+            Started{" "}
+            {format.time(state.lastTick ?? 0, { epoch: state.lastReset })}
           </IonCol>
           <IonCol size="12">
             This session started{" "}
-            {Format.time(rm.lastTick ?? 0, { epoch: rm.lastLoaded })}
+            {format.time(state.lastTick ?? 0, {
+              epoch: state.lastLoaded,
+            })}
           </IonCol>
           <IonCol size="12">
-            Game was last saved{" "}
-            {Format.time(rm.lastTick ?? 0, { epoch: rm.lastSaved })}
+            Last saved{" "}
+            {format.time(state.lastTick ?? 0, { epoch: state.lastSaved })}
           </IonCol>
         </IonRow>
         <IonRow>
           <IonCol size="6">
             <IonButton
               onClick={() => {
-                Game.ResourceManager.load()
-                  .then(() => Game.ResourceManager.save())
-                  .then(reload);
+                State.load().then(State.save).then(reload);
               }}
               expand="block"
             >
-              Load Game
+              Load
             </IonButton>
           </IonCol>
           <IonCol size="6">
-            <IonButton
-              onClick={() => Game.ResourceManager.save(debug)}
-              expand="block"
-            >
-              Save Game
-              {debug && " [debug]"}
+            <IonButton onClick={() => State.save()} expand="block">
+              Save
             </IonButton>
           </IonCol>
           <IonCol size="6">
@@ -109,14 +102,13 @@ function GameDataPanel() {
           <IonCol size="6">
             <IonButton onClick={saveFile} expand="block">
               Save to File
-              {debug && " [debug]"}
             </IonButton>
           </IonCol>
           <IonCol size="6">
             <IonButton
               onClick={() => {
-                rm.load(decode(textContents));
-                Game.ResourceManager.save().then(reload);
+                state.load(decode(textContents));
+                State.save().then(reload);
               }}
               expand="block"
             >
@@ -125,19 +117,21 @@ function GameDataPanel() {
           </IonCol>
           <IonCol size="6">
             <IonButton
-              onClick={() => setTextContents(encode(rm.save(), debug))}
+              onClick={() =>
+                setTextContents(encode(state.save(), State.isDebug()))
+              }
               expand="block"
             >
               Export Text
-              {debug && " [debug]"}
             </IonButton>
           </IonCol>
           <IonCol size="12">
             <IonTextarea
-              label="Game data for import/export"
+              label="Data for import/export"
               labelPlacement="floating"
               fill="outline"
               rows={5}
+              autoGrow={true}
               value={textContents}
               onIonInput={(e) => setTextContents(e.detail.value ?? "")}
             ></IonTextarea>
@@ -149,14 +143,8 @@ function GameDataPanel() {
 }
 
 function NumberFormatPanel() {
-  const rm = ResourceManager.singleton;
-  const [format, setFormat] = React.useState(
-    rm.globalNumberFormat || "Standard",
-  );
-
-  React.useEffect(() => {
-    rm.globalNumberFormat = format;
-  }, [format]);
+  const state = State.useHook();
+  const defaultNotation = Notation.get(state.formatOptions.notation);
 
   return (
     <IonCard>
@@ -168,51 +156,53 @@ function NumberFormatPanel() {
             </IonCol>
           </IonRow>
         </IonCardTitle>
-        <IonCardSubtitle>
-          <IonRow>
-            <IonCol size="6" className="ion-text-right">
-              Current number format is:
-            </IonCol>
-            <IonCol size="6" className="ion-text-left">
-              {formatWithNotation.all[format].name}
-            </IonCol>
-          </IonRow>
-        </IonCardSubtitle>
       </IonCardHeader>
       <IonCardContent>
         <IonRow>
-          {Object.values(formatWithNotation.all).map((notation) => (
-            <IonCol
-              size="6"
-              key={`notation-${notation.name}`}
-              className="ion-text-center"
-            >
+          <IonCol size="12">
+            <IonText>Current number format is </IonText>
+            <IonText color="primary">{defaultNotation.name}</IonText>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          {Object.values(Notation.all).map((notation) => (
+            <IonCol size="6" key={notation.name}>
               <IonButton
-                onClick={() => setFormat(notation.name)}
-                fill="outline"
+                onClick={() =>
+                  state.set({
+                    formatOptions: { notation: notation.name },
+                  })
+                }
+                color={
+                  defaultNotation.name === notation.name
+                    ? "secondary"
+                    : "primary"
+                }
                 expand="block"
               >
-                <IonRow>
-                  <IonCol
-                    size="12"
-                    className="ion-text-center"
-                    style={{ textTransform: "none" }}
-                  >
-                    {notation.name}
-                  </IonCol>
-                  {[123456.789, 123.456e89].map((num, idx) => (
-                    <IonCol
-                      key={`sample-${notation.name}-${idx}`}
-                      size="12"
-                      className="ion-text-center"
-                      style={{ textTransform: "none" }}
-                    >
-                      <IonText color="secondary">
-                        {formatWithNotation(num, notation, 3)}
-                      </IonText>
+                <IonGrid>
+                  <IonRow>
+                    <IonCol size="12" className="ion-text-center">
+                      <IonLabel>{notation.name}</IonLabel>
                     </IonCol>
-                  ))}
-                </IonRow>
+                  </IonRow>
+                  <IonRow>
+                    {[
+                      // "0.123456",
+                      "123456.789",
+                      // "12345678901234567890.1234567890",
+                      // "123.456e78.9",
+                    ].map((num, idx) => (
+                      <IonCol
+                        key={`sample-${notation.name}-${idx}`}
+                        size="12"
+                        className="ion-text-center"
+                      >
+                        <IonText>{notation.format(num, 3, 3, 3)}</IonText>
+                      </IonCol>
+                    ))}
+                  </IonRow>
+                </IonGrid>
               </IonButton>
             </IonCol>
           ))}
@@ -223,22 +213,22 @@ function NumberFormatPanel() {
 }
 
 function AdvancedPanel() {
-  const rm = Game.useResourceManager();
-  const [tps, setTps] = React.useState(rm.ticksPerSecond);
-  const [fps, setFps] = React.useState(rm.rendersPerSecond);
-  const [sps, setSps] = React.useState(rm.saveFrequencySecs);
+  const state = State.useHook();
+  const [tps, setTps] = useState(state.ticksPerSec);
+  const [fps, setFps] = useState(state.rendersPerSec);
+  const [sps, setSps] = useState(state.saveFrequencySecs);
 
-  React.useEffect(() => {
-    setTps(rm.ticksPerSecond);
-  }, [rm.ticksPerSecond]);
+  useEffect(() => {
+    setTps(state.ticksPerSec);
+  }, [state.ticksPerSec]);
 
-  React.useEffect(() => {
-    setFps(rm.rendersPerSecond);
-  }, [rm.rendersPerSecond]);
+  useEffect(() => {
+    setFps(state.rendersPerSec);
+  }, [state.rendersPerSec]);
 
-  React.useEffect(() => {
-    setSps(rm.saveFrequencySecs);
-  }, [rm.saveFrequencySecs]);
+  useEffect(() => {
+    setSps(state.saveFrequencySecs);
+  }, [state.saveFrequencySecs]);
 
   return (
     <IonCard>
@@ -255,28 +245,27 @@ function AdvancedPanel() {
         <IonRow>
           <IonCol size="12">
             If you are having performance issues, increase the time between
-            updates. Faster updating frequncies lead to better game experience
-            but might use a lot of CPU.
+            updates. Faster updating frequncies lead to better experience but
+            might use a lot of CPU.
           </IonCol>
           <IonCol size="6" className="ion-text-right">
             Updating frequency:
           </IonCol>
           <IonCol size="6" className="ion-text-center">
-            {Math.floor(1000.0 / rm.ticksPerSecond)}ms
+            {Math.floor(1000.0 / state.ticksPerSec)}ms
           </IonCol>
           <IonCol size="6"></IonCol>
           <IonCol size="6">
             <IonRange
-              min={1}
-              max={60}
+              min={6}
+              max={100}
               step={1}
               pin={true}
               pinFormatter={(value) => `${Math.floor(1000.0 / value)}ms`}
               value={tps}
               onIonInput={(e) => setTps(e.detail.value as number)}
               onIonChange={(e) => {
-                rm.ticksPerSecond = e.detail.value as number;
-                Game.ResourceManager.signalUpdate();
+                state.set({ ticksPerSec: e.detail.value as number });
               }}
               className="ion-no-padding"
             ></IonRange>
@@ -285,7 +274,7 @@ function AdvancedPanel() {
             Rendering frequency:
           </IonCol>
           <IonCol size="6" className="ion-text-center">
-            {Math.floor(1000.0 / rm.rendersPerSecond)}ms
+            {Math.floor(1000.0 / state.rendersPerSec)}ms
           </IonCol>
           <IonCol size="6"></IonCol>
           <IonCol size="6">
@@ -298,8 +287,7 @@ function AdvancedPanel() {
               value={fps}
               onIonInput={(e) => setFps(e.detail.value as number)}
               onIonChange={(e) => {
-                rm.rendersPerSecond = e.detail.value as number;
-                Game.ResourceManager.signalUpdate();
+                state.set({ rendersPerSec: e.detail.value as number });
               }}
               className="ion-no-padding"
             ></IonRange>
@@ -307,14 +295,15 @@ function AdvancedPanel() {
         </IonRow>
         <IonRow>
           <IonCol size="12">
-            Change how often the game is saved in the background. More frequent
-            saving leads to faster backups, but increases CPU and I/O usage
+            Change how often the session is saved in the background. More
+            frequent saving leads to faster backups, but increases CPU and I/O
+            usage
           </IonCol>
           <IonCol size="6" className="ion-text-right">
             Saving frequency:
           </IonCol>
           <IonCol size="6" className="ion-text-center">
-            {Format.time(1000 * rm.saveFrequencySecs, { ago: "" })}
+            {format.time(1000 * state.saveFrequencySecs, { ago: "" })}
           </IonCol>
           <IonCol size="6"></IonCol>
           <IonCol size="6">
@@ -324,16 +313,19 @@ function AdvancedPanel() {
               step={1}
               pin={true}
               pinFormatter={(value) =>
-                Format.time(1000 * (600 / value), {
-                  ago: "",
-                  len: "tiny",
-                }).replace(":", "m:") + "s"
+                format
+                  .time(1000 * (600 / value), {
+                    ago: "",
+                    len: "tiny",
+                  })
+                  .replace(":", "m:") + "s"
               }
               value={600 / sps}
               onIonInput={(e) => setSps(600 / (e.detail.value as number))}
               onIonChange={(e) => {
-                rm.saveFrequencySecs = 600 / (e.detail.value as number);
-                Game.ResourceManager.signalUpdate();
+                state.set({
+                  saveFrequencySecs: 600 / (e.detail.value as number),
+                });
               }}
               className="ion-no-padding"
             ></IonRange>
@@ -345,18 +337,15 @@ function AdvancedPanel() {
 }
 
 function ResetPanel() {
-  const [resetAcknowledged, setResetAcknowledged] = React.useState(false);
+  const [resetAcknowledged, setResetAcknowledged] = useState(false);
 
-  function resetGame() {
+  function resetAll() {
     if (!resetAcknowledged) {
       return;
     }
     setResetAcknowledged(false);
-    for (const key in ResourceManager.singleton.resources) {
-      delete ResourceManager.singleton.resources[key];
-    }
-    ResourceManager.reset();
-    Game.Database.clear().then(reload);
+    State.reset();
+    database.clear().then(reload);
   }
 
   return (
@@ -365,7 +354,7 @@ function ResetPanel() {
         <IonCardTitle>
           <IonRow>
             <IonCol size="12" className="ion-text-center">
-              <IonText>Game Reset</IonText>
+              <IonText>Reset</IonText>
             </IonCol>
           </IonRow>
         </IonCardTitle>
@@ -374,10 +363,10 @@ function ResetPanel() {
         <IonRow>
           <IonCol size="12">
             <IonText color="danger">
-              WARNING: this will completely reset your game and delete all saved
-              progress and setting. Only use this if you want to restart the
-              game from beginning, or if something in the settings is so messed
-              up that the game is now unplayable.
+              WARNING: this will completely reset your settings and delete all
+              saved progress. Only use this if you want to restart from the
+              beginning, or if something in the settings is so messed up that it
+              is unusable.
             </IonText>
           </IonCol>
           <IonCol size="12">
@@ -386,12 +375,12 @@ function ResetPanel() {
               checked={resetAcknowledged}
               onIonChange={() => setResetAcknowledged((a) => !a)}
             >
-              I understand what this means and still want to reset the game
+              I understand what this means and still want to reset
             </IonCheckbox>
           </IonCol>
           <IonCol size="12" class="ion-text-right">
             <IonButton
-              onClick={resetGame}
+              onClick={resetAll}
               disabled={!resetAcknowledged}
               color={resetAcknowledged ? "danger" : "medium"}
             >
@@ -405,8 +394,8 @@ function ResetPanel() {
 }
 
 function DebugPanel() {
-  const rm = Game.useResourceManager();
-  if (!window.location.search.toLowerCase().includes("debug")) {
+  const state = State.useHook();
+  if (!State.isDebug()) {
     return null;
   }
 
@@ -427,7 +416,7 @@ function DebugPanel() {
             <IonTextarea
               autoGrow={true}
               readonly={true}
-              value={encode(rm, true)}
+              value={encode(state, true)}
             ></IonTextarea>
           </IonCol>
         </IonRow>
@@ -437,8 +426,7 @@ function DebugPanel() {
 }
 
 function saveFile() {
-  const rm = ResourceManager.singleton;
-  const debug = window.location.search.toLowerCase().includes("debug");
+  const state = State.global;
   const name = (import.meta.env.NAME as string).replace(/\W/g, "_");
   const version = (import.meta.env.VERSION as string).replace(/\W/g, "_");
   const date = new Date()
@@ -447,7 +435,7 @@ function saveFile() {
     .trim()
     .replace(/\D/g, "-");
   const fileName = `${name}-v${version}-${date}`;
-  const fileData = encode(rm.save(), debug);
+  const fileData = encode(state.save(), State.isDebug());
   const contents = new Blob([fileData], { type: "text/plain" });
 
   const url = URL.createObjectURL(contents);
@@ -476,11 +464,10 @@ function loadFile() {
           return;
         }
 
-        const rm = ResourceManager.singleton;
-        rm.load(decode(contents));
-        rm.tick(undefined, "load");
-        Game.ResourceManager.signalUpdate();
-        Game.ResourceManager.save().then(reload);
+        const state = State.global;
+        state.load(decode(contents));
+        state.tick(undefined, "load");
+        State.save().then(reload);
       };
 
       reader.readAsText(files[0]);
@@ -493,6 +480,6 @@ function loadFile() {
 
 function reload() {
   const history = createBrowserHistory();
-  history.push("/");
+  history.push("#/");
   window.location.reload();
 }

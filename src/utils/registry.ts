@@ -1,12 +1,9 @@
-import React from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import { useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 
 export default function genRegistry<T>(props: T | (() => T)) {
-  const registry: Record<
-    string,
-    React.Dispatch<React.SetStateAction<{ ref: T }>>
-  > = {};
+  const registry: Record<string, Dispatch<SetStateAction<{ ref: T }>>> = {};
 
   function get(): T {
     if (typeof props === "function") {
@@ -21,7 +18,7 @@ export default function genRegistry<T>(props: T | (() => T)) {
   }
 
   function register(
-    fn: React.Dispatch<React.SetStateAction<{ ref: T }>>,
+    fn: Dispatch<SetStateAction<{ ref: T }>>,
     oldId?: string,
   ): string {
     const id = oldId || getNewId();
@@ -43,10 +40,10 @@ export default function genRegistry<T>(props: T | (() => T)) {
   }
 
   function useHook() {
-    const [id, setId] = React.useState(getNewId);
-    const [ref, setRef] = React.useState(() => ({ ref: get() }));
+    const [id, setId] = useState(getNewId);
+    const [ref, setRef] = useState(() => ({ ref: get() }));
 
-    React.useEffect(() => {
+    useEffect(() => {
       const handle = register(setRef, id);
       setId(handle);
       return () => {

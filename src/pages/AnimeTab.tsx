@@ -10,7 +10,7 @@ import {
 } from "@ionic/react";
 
 import ImageComposition from "../components/ImageComposition";
-import Game from "../model/Game";
+import TabApp from "../components/TabApp";
 import RPG from "../model/RPG";
 import Format from "../utils/format";
 
@@ -79,12 +79,12 @@ export default function AnimeTab() {
 }
 
 AnimeTab.init = () => {
-  Game.Tab.register({
+  TabApp.register({
     path: "anime",
     content: <AnimeTab />,
     icon: "gameControllerOutline",
     label: "Anime",
-    title: "Anime Character Creation",
+    title: "Anime Character",
     from: "/",
   });
 };

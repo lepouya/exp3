@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import RPG from "./RPG";
+import RPG from "../RPG";
 
 RPG.registerItem({ name: "r0", type: "rank" });
 RPG.registerItem({

@@ -1,3 +1,5 @@
+import system from "./system";
+
 let skipEncoding = false;
 export function codec(s: string): string {
   if (skipEncoding || !s) {
@@ -15,6 +17,9 @@ export function codec(s: string): string {
       .join("")
   );
 }
+codec.skip = (shouldSkip = true) => {
+  skipEncoding = shouldSkip;
+};
 
 export function stringify<T>(value: T, space?: string | number | undefined) {
   const seen: any[] = [];
@@ -41,11 +46,9 @@ export function stringify<T>(value: T, space?: string | number | undefined) {
 }
 
 export function encode<T>(value: T, pretty = false) {
-  let data = stringify(value, pretty ? 2 : undefined);
+  const data = stringify(value, pretty ? 2 : undefined);
   if (!pretty) {
-    data = encodeURIComponent(data);
-    data = codec(data);
-    data = window.btoa(data);
+    return system.btoa(codec(encodeURIComponent(data)));
   }
   return data;
 }
@@ -55,24 +58,24 @@ export function decode<T>(data: string): T | undefined {
     return (data as T) ?? undefined;
   }
 
-  let parsed: T | undefined = undefined;
-  if (!parsed) {
-    try {
-      parsed = JSON.parse(decodeURIComponent(codec(window.atob(data))));
-    } catch {
-      parsed = undefined;
+  try {
+    const parsed = JSON.parse(decodeURIComponent(codec(system.atob(data))));
+    if (parsed) {
+      return parsed;
     }
-  }
-  if (!parsed) {
-    try {
-      parsed = JSON.parse(data);
-    } catch {
-      parsed = undefined;
+  } catch {}
+  try {
+    const parsed = JSON.parse(data);
+    if (parsed) {
+      return parsed;
     }
-  }
-  if (!parsed) {
-    parsed = data as T;
-  }
+  } catch {}
+  try {
+    const parsed = decodeURIComponent(system.atob(data));
+    if (parsed) {
+      return parsed as T;
+    }
+  } catch {}
 
-  return parsed;
+  return data as T;
 }
